@@ -42,6 +42,7 @@ export type CustomError =
   | EventQueueNotEmpty
   | NumericalOverflow
   | SlabIteratorOverflow
+  | IncompatibleMintDecimals
 
 export class NotImplemented extends Error {
   readonly code = 6000
@@ -500,6 +501,16 @@ export class SlabIteratorOverflow extends Error {
   }
 }
 
+export class IncompatibleMintDecimals extends Error {
+  readonly code = 6043
+  readonly name = "IncompatibleMintDecimals"
+  readonly msg = "Base & quote mint need to have the same decimals"
+
+  constructor() {
+    super("6043: Base & quote mint need to have the same decimals")
+  }
+}
+
 export function fromCode(code: number): CustomError | null {
   switch (code) {
     case 6000:
@@ -588,6 +599,8 @@ export function fromCode(code: number): CustomError | null {
       return new NumericalOverflow()
     case 6042:
       return new SlabIteratorOverflow()
+    case 6043:
+      return new IncompatibleMintDecimals()
   }
 
   return null
