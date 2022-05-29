@@ -2,6 +2,7 @@
   "name": "auction-house",
   "scripts": {
     "dev": "next dev",
+    "client-gen": "anchor-client-gen target/idl/auction_house.json generated",
     "build": "next build",
     "start": "next start",
     "lint": "next lint"
@@ -22,6 +23,7 @@
     "@solana/wallet-adapter-sollet": "^0.10.0",
     "@solana/web3.js": "^1.37.0",
     "dayjs": "^1.11.2",
+    "anchor-client-gen": "^0.24.0",
     "immer": "^9.0.7",
     "next": "12.0.7",
     "next-transpile-modules": "^9.0.0",
