@@ -2,7 +2,6 @@ import { BN, getProvider } from "@project-serum/anchor";
 import {
   Keypair,
   PublicKey,
-  Signer,
   SystemProgram,
   SYSVAR_RENT_PUBKEY,
   Transaction,
@@ -19,11 +18,7 @@ import Modal from "../components/Modal";
 import useLocalStorageState, {
   handleParseKeyPairArray,
 } from "../hooks/useLocalStorageState";
-import {
-  getAuctionPk,
-  getBaseVaultPk,
-  getQuoteVaultPk,
-} from "../utils/findProgramTools";
+import { getAuctionAddresses } from "../utils/findProgramTools";
 import * as dayjs from "dayjs";
 const AuctionItem = ({
   pk,
@@ -126,17 +121,7 @@ const AuctionsList = () => {
 
     let nowBn = new BN(Date.now() / 1000);
     // let auctionIdArray = Array.from(auctionId);
-    const auctionPk = await getAuctionPk(
-      auctionId,
-      provider.wallet.publicKey,
-      program.programId
-    );
-    const quoteVault = await getQuoteVaultPk(
-      auctionId,
-      provider.wallet.publicKey,
-      program.programId
-    );
-    const baseVault = await getBaseVaultPk(
+    const { auctionPk, quoteVault, baseVault } = await getAuctionAddresses(
       auctionId,
       provider.wallet.publicKey,
       program.programId

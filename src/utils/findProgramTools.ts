@@ -1,50 +1,61 @@
 import { PublicKey } from "@solana/web3.js";
 
-export const getAuctionPk = async (
-  auctionId: Buffer,
-  walletPk: PublicKey,
-  programPk: PublicKey
-) => {
+type GetAuctionAddressesParams = Parameters<
+  (
+    auctionId: Buffer | number[],
+    walletPk: PublicKey,
+    programPk: PublicKey
+  ) => void
+>;
+
+export const getAuctionPk = async (...args: GetAuctionAddressesParams) => {
   const auction = await findProgramAddressBase(
     "auction",
-    auctionId,
-    walletPk,
-    programPk
+    args[0],
+    args[1],
+    args[2]
   );
   return auction;
 };
 
-export const getQuoteVaultPk = async (
-  auctionId: Buffer,
-  walletPk: PublicKey,
-  programPk: PublicKey
-) => {
+export const getQuoteVaultPk = async (...args: GetAuctionAddressesParams) => {
   const quoteVault = await findProgramAddressBase(
     "quote_vault",
-    auctionId,
-    walletPk,
-    programPk
+    args[0],
+    args[1],
+    args[2]
   );
   return quoteVault;
 };
 
-export const getBaseVaultPk = async (
-  auctionId: Buffer,
-  walletPk: PublicKey,
-  programPk: PublicKey
-) => {
+export const getBaseVaultPk = async (...args: GetAuctionAddressesParams) => {
   const baseVault = await findProgramAddressBase(
     "base_vault",
-    auctionId,
-    walletPk,
-    programPk
+    args[0],
+    args[1],
+    args[2]
   );
   return baseVault;
 };
 
+export const getAuctionAddresses = async (
+  ...args: GetAuctionAddressesParams
+) => {
+  const [auctionPk, quoteVault, baseVault] = await Promise.all([
+    getAuctionPk(args[0], args[1], args[2]),
+    getQuoteVaultPk(args[0], args[1], args[2]),
+    getBaseVaultPk(args[0], args[1], args[2]),
+  ]);
+  return {
+    auctionPk,
+    quoteVault,
+    baseVault,
+  };
+};
+
 export const findProgramAddressBase = async (
   bufferName: string,
-  param1: Buffer,
+  param1: Buffer | number[],
   param2: PublicKey,
   programPk: PublicKey
 ) => {
