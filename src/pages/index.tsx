@@ -19,7 +19,12 @@ import Modal from "../components/Modal";
 import useLocalStorageState, {
   handleParseKeyPairArray,
 } from "../hooks/useLocalStorageState";
-
+import {
+  getAuctionPk,
+  getBaseVaultPk,
+  getQuoteVaultPk,
+} from "../utils/findProgramTools";
+import * as dayjs from "dayjs";
 const AuctionItem = ({
   pk,
   auction,
@@ -38,15 +43,22 @@ const AuctionItem = ({
       <tr key={pk.toString()}>
         <td>{auction.auctionId}</td>
         <td>
-          {new Date(auction.startOrderPhase.toNumber() * 1000).toLocaleString()}
+          {dayjs
+            .unix(auction.startOrderPhase.toNumber())
+            .toDate()
+            .toLocaleString()}
         </td>
         <td>
-          {new Date(auction.endOrderPhase.toNumber() * 1000).toLocaleString()}
+          {dayjs
+            .unix(auction.endOrderPhase.toNumber())
+            .toDate()
+            .toLocaleString()}
         </td>
         <td>
-          {new Date(
-            auction.endDecryptionPhase.toNumber() * 1000
-          ).toLocaleString()}
+          {dayjs
+            .unix(auction.endDecryptionPhase.toNumber())
+            .toDate()
+            .toLocaleString()}
         </td>
         <td>{auction.clearingPrice.toNumber()}</td>
         <td>{auction.totalQuantityMatched.toNumber()}</td>
@@ -102,44 +114,31 @@ const AuctionsList = () => {
   useEffect(() => {
     fetchAuctions();
   }, []);
-
   const createAuction = async (data: any) => {
+    console.log(data);
     const provider = getProvider();
     console.log("auction", data, provider);
 
     let tx = new Transaction();
-    let signers: Signer[] = [];
 
     const auctionId = Buffer.alloc(10);
     auctionId.writeUIntLE(Date.now(), 0, 6);
 
     let nowBn = new BN(Date.now() / 1000);
     // let auctionIdArray = Array.from(auctionId);
-    let [auctionPk] = await PublicKey.findProgramAddress(
-      // TODO toBuffer might not be LE (lower endian) by default
-      [
-        Buffer.from("auction"),
-        Buffer.from(auctionId),
-        provider.wallet.publicKey.toBuffer(),
-      ],
+    const auctionPk = await getAuctionPk(
+      auctionId,
+      provider.wallet.publicKey,
       program.programId
     );
-    let [quoteVault] = await PublicKey.findProgramAddress(
-      // TODO toBuffer might not be LE (lower endian) by default
-      [
-        Buffer.from("quote_vault"),
-        Buffer.from(auctionId),
-        provider.wallet.publicKey.toBuffer(),
-      ],
+    const quoteVault = await getQuoteVaultPk(
+      auctionId,
+      provider.wallet.publicKey,
       program.programId
     );
-    let [baseVault] = await PublicKey.findProgramAddress(
-      // TODO toBuffer might not be LE (lower endian) by default
-      [
-        Buffer.from("base_vault"),
-        Buffer.from(auctionId),
-        provider.wallet.publicKey.toBuffer(),
-      ],
+    const baseVault = await getBaseVaultPk(
+      auctionId,
+      provider.wallet.publicKey,
       program.programId
     );
     let eventQueueKeypair = new Keypair();

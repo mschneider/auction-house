@@ -90,7 +90,7 @@ export const handleParseKeyPairArray = (val: string) => {
 };
 
 export const handleParseKeyPairObj = (val: string) => {
-  const nativeParsedValue = JSON.parse(val);
+  const nativeParsedValue: nacl.BoxKeyPair = JSON.parse(val);
   return parseKeyPairObj(nativeParsedValue);
 };
 
