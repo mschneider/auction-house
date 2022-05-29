@@ -10,7 +10,7 @@ import { ThemeProvider } from "next-themes";
 function MyApp({ Component, pageProps }: AppProps) {
   useWallet();
   return (
-    <div className={styles.container}>
+    <div className={styles.container + " bg-th-bkg-1"}>
       <Head>
         <title>Mango Markets</title>
         <meta name="description" content="Mango Markets" />

@@ -205,7 +205,7 @@ const AuctionsList = () => {
 
   return (
     <>
-      <div className="flex space-x-2">
+      <div className="flex space-x-2 bg-th-bkg-1">
         <h1 className="p-1">Auctions</h1>
         <div className="border p-1">
           {loadingAuctions ? (
