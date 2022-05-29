@@ -5,6 +5,7 @@ import Head from "next/head";
 import ConnectWalletButton from "../components/ConnectWalletButton";
 
 import useWallet from "../hooks/useWallet";
+import { ThemeProvider } from "next-themes";
 
 function MyApp({ Component, pageProps }: AppProps) {
   useWallet();
@@ -16,12 +17,14 @@ function MyApp({ Component, pageProps }: AppProps) {
         <link rel="icon" href="/favicon.ico" />
       </Head>
 
-      <header className="flex justify-end">
-        <ConnectWalletButton />
-      </header>
-      <main className={styles.main}>
-        <Component {...pageProps} />
-      </main>
+      <ThemeProvider defaultTheme="Mango">
+        <header className="flex justify-end">
+          <ConnectWalletButton />
+        </header>
+        <main className={styles.main}>
+          <Component {...pageProps} />
+        </main>
+      </ThemeProvider>
     </div>
   );
 }

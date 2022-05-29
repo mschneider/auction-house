@@ -39,6 +39,7 @@ import {
 } from "@solana/spl-token";
 import { token } from "@project-serum/anchor/dist/cjs/utils";
 import Input, { Label } from "../../components/Input";
+import Button from "../../components/Button";
 
 const AuctionView = () => {
   const router = useRouter();
@@ -473,10 +474,9 @@ const AuctionView = () => {
 
               <div>
                 <label className="space-x-2">
-                  <span>Price:</span>
-                  <input
+                  <Label>Price:</Label>
+                  <Input
                     type="number"
-                    className="border"
                     step="any"
                     {...register("price", { valueAsNumber: true })}
                   />
@@ -499,7 +499,7 @@ const AuctionView = () => {
                   </label>
                 </div>
               )}
-              <input className="border p-1" type="submit" />
+              <Button type="submit">Send</Button>
             </form>
           </div>
         </Modal>
