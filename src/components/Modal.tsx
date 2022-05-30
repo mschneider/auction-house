@@ -1,6 +1,7 @@
 import React from "react";
 import { Portal } from "react-portal";
 import { XIcon } from "@heroicons/react/outline";
+import Button from "./Button";
 
 const Modal: any = React.forwardRef<any, any>((props, ref) => {
   const {
@@ -49,12 +50,12 @@ const Modal: any = React.forwardRef<any, any>((props, ref) => {
             >
               {!hideClose ? (
                 <div className="">
-                  <button
+                  <Button
                     onClick={onClose}
                     className={`absolute right-4 top-4 text-th-fgd-1 hover:text-th-primary focus:outline-none md:right-2 md:top-2`}
                   >
                     <XIcon className={`h-5 w-5`} />
-                  </button>
+                  </Button>
                 </div>
               ) : null}
               {children}

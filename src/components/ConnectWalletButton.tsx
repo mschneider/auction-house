@@ -50,16 +50,16 @@ const ConnectWalletButton = (props: any) => {
           <div className="pr-2">
             <img src={provider?.icon} className="h-5 w-5" />
           </div>
-          <div>
+          <p className="m-0">
             {connected ? "Disconnect" : "Connect"}
-            <StyledWalletProviderLabel className="font-normal text-fgd-3">
+            <StyledWalletProviderLabel className="font-normal text-th-fgd-3">
               {provider?.name}
             </StyledWalletProviderLabel>
-          </div>
+          </p>
         </div>
       </button>
 
-      <div className="relative ">
+      <div className="relative text-th-fgd-3">
         <Menu>
           {({ open }) => (
             <>
@@ -72,11 +72,11 @@ const ConnectWalletButton = (props: any) => {
                   } default-transition h-5 m-auto ml-1 text-primary-light w-5`}
                 />
               </Menu.Button>
-              <Menu.Items className="absolute bg-bkg-1 border border-fgd-4 p-2 right-0 top-14 shadow-md outline-none rounded-md w-48 z-20">
+              <Menu.Items className="absolute bg-bkg-1 border border-fgd-4 p-2 right-0 top-14 shadow-md outline-none rounded-md w-48 z-20 text-th-fgd-3">
                 {WALLET_PROVIDERS.map(({ name, url, icon }) => (
                   <Menu.Item key={name}>
                     <button
-                      className="flex default-transition h-9 items-center p-2 w-full hover:bg-bkg-3 hover:cursor-pointer hover:rounded font-normal focus:outline-none"
+                      className="flex default-transition h-9 items-center p-2 w-full hover:bg-bkg-3 hover:cursor-pointer hover:rounded font-normal focus:outline-none m-0"
                       onClick={() =>
                         setWalletStore((s: WalletStore) => {
                           s.providerUrl = url;
@@ -84,7 +84,7 @@ const ConnectWalletButton = (props: any) => {
                       }
                     >
                       <img src={icon} className="h-4 w-4 mr-2" />
-                      <span className="text-sm">{name}</span>
+                      <span className="text-sm text-th-fgd-3">{name}</span>
 
                       {provider?.url === url ? (
                         <CheckCircleIcon className="h-5 ml-2 text-green w-5" />

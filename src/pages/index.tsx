@@ -20,6 +20,8 @@ import useLocalStorageState, {
 } from "../hooks/useLocalStorageState";
 import { getAuctionAddresses } from "../utils/findProgramTools";
 import * as dayjs from "dayjs";
+import Button from "../components/Button";
+import Input, { Label } from "../components/Input";
 const AuctionItem = ({
   pk,
   auction,
@@ -207,20 +209,20 @@ const AuctionsList = () => {
     <>
       <div className="flex space-x-2 bg-th-bkg-1">
         <h1 className="p-1">Auctions</h1>
-        <div className="border p-1">
+        <div className=" p-1">
           {loadingAuctions ? (
             "xxxxx"
           ) : (
-            <button onClick={fetchAuctions}>fetch</button>
+            <Button onClick={fetchAuctions}>fetch</Button>
           )}
         </div>
-        <div className="border p-1">
-          <button onClick={() => setOpenCreateAuctionModal(true)}>
+        <div className=" p-1">
+          <Button onClick={() => setOpenCreateAuctionModal(true)}>
             create
-          </button>
+          </Button>
         </div>
       </div>
-      <table className="table-auto">
+      <table className="table-auto bg-th-bkg-4 text-th-fgd-3">
         <thead>
           <tr>
             <th>PK</th>
@@ -257,89 +259,88 @@ const AuctionsList = () => {
             <form onSubmit={handleSubmit(createAuction)}>
               <div>
                 <label className="space-x-2">
-                  <span>Base Mint:</span>
-                  <input className="border" {...register("baseMint")} />
+                  <Label>Base Mint:</Label>
+                  <Input {...register("baseMint")} />
                 </label>
               </div>
 
               <div>
                 <label className="space-x-2">
-                  <span>Quote Mint:</span>
-                  <input className="border" {...register("quoteMint")} />
+                  <Label>Quote Mint:</Label>
+                  <Input {...register("quoteMint")} />
                 </label>
               </div>
 
               <div>
                 <label className="space-x-2">
-                  <span>Encrypt Asks</span>
-                  <input type="checkbox" {...register("areAsksEncrypted")} />
+                  <Label>Encrypt Asks</Label>
+                  <Input type="checkbox" {...register("areAsksEncrypted")} />
                 </label>
               </div>
 
               <div>
                 <label className="space-x-2">
-                  <span>Encrypt Bids</span>
-                  <input type="checkbox" {...register("areBidsEncrypted")} />
+                  <Label>Encrypt Bids</Label>
+                  <Input type="checkbox" {...register("areBidsEncrypted")} />
                 </label>
               </div>
 
               <div>
                 <label className="space-x-2">
-                  <span>Min Base Order Size:</span>
-                  <input className="border" {...register("minBaseOrderSize")} />
+                  <Label>Min Base Order Size:</Label>
+                  <Input {...register("minBaseOrderSize")} />
                 </label>
               </div>
 
               <div>
                 <label className="space-x-2">
-                  <span>Tick Size:</span>
-                  <input className="border" {...register("tickSize")} />
+                  <Label>Tick Size:</Label>
+                  <Input {...register("tickSize")} />
                 </label>
               </div>
 
               <div>
                 <label className="space-x-2">
-                  <span>Order Phase Duration (s):</span>
-                  <input className="border" {...register("orderPhaseLength")} />
+                  <Label>Order Phase Duration (s):</Label>
+                  <Input {...register("orderPhaseLength")} />
                 </label>
               </div>
 
               <div>
                 <label className="space-x-2">
-                  <span>Decryption Phase Duration (s):</span>
-                  <input
-                    className="border"
-                    {...register("decryptionPhaseLength")}
-                  />
+                  <Label>Decryption Phase Duration (s):</Label>
+                  <Input {...register("decryptionPhaseLength")} />
                 </label>
               </div>
 
               <div>
                 <label className="space-x-2">
-                  <span>Event Queue Bytes:</span>
-                  <input className="border" {...register("eventQueueBytes")} />
+                  <Label>Event Queue Bytes:</Label>
+                  <Input {...register("eventQueueBytes")} />
                 </label>
               </div>
               <div>
                 <label className="space-x-2">
-                  <span>Bids Bytes:</span>
-                  <input className="border" {...register("bidsBytes")} />
+                  <Label>Bids Bytes:</Label>
+                  <Input {...register("bidsBytes")} />
                 </label>
               </div>
               <div>
                 <label className="space-x-2">
-                  <span>Asks Bytes:</span>
-                  <input className="border" {...register("asksBytes")} />
+                  <Label>Asks Bytes:</Label>
+                  <Input {...register("asksBytes")} />
                 </label>
               </div>
               <div>
                 <label className="space-x-2">
-                  <span>Max Orders (per User):</span>
-                  <input className="border" {...register("maxOrders")} />
+                  <Label>Max Orders (per User):</Label>
+                  <Input {...register("maxOrders")} />
                 </label>
               </div>
 
-              <input className="border p-1" type="submit" />
+              <Button className="p-1" type="submit">
+                Create
+              </Button>
             </form>
           </div>
         </Modal>

@@ -344,8 +344,8 @@ const AuctionView = () => {
       <div className="grid grid-cols-1 gap-4">
         <div className="border p-4">
           <h1>Actions</h1>
-          <div className="border p-1 inline-block">
-            <button onClick={() => setOpenBidModal(true)}>Create Bid</button>
+          <div className=" p-1 inline-block">
+            <Button onClick={() => setOpenBidModal(true)}>Create Bid</Button>
           </div>
         </div>
         <div className="border p-4">
@@ -431,8 +431,8 @@ const AuctionView = () => {
                         </div>
 
                         <div className="p-4">
-                          <div className="border p-1 inline-block">
-                            <button onClick={() => cancelBid(i)}>cancel</button>{" "}
+                          <div className=" p-1 inline-block">
+                            <Button onClick={() => cancelBid(i)}>cancel</Button>{" "}
                           </div>
                         </div>
                       </div>

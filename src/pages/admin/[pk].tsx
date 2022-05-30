@@ -31,6 +31,7 @@ import {
 import { toFp32, toFpLimitPrice } from "../../../tests/sdk/utils";
 import { BN } from "@project-serum/anchor";
 import { TOKEN_PROGRAM_ID } from "@solana/spl-token";
+import Button from "../../components/Button";
 
 const AdminView = () => {
   const router = useRouter();
@@ -277,8 +278,8 @@ const AdminView = () => {
       <div className="grid grid-cols-1 gap-4">
         <div className="border p-4">
           <h1>Actions</h1>
-          <div className="border p-1 inline-block">
-            <button onClick={() => setOpenAskModal(true)}>Create Ask</button>
+          <div className=" p-1 inline-block">
+            <Button onClick={() => setOpenAskModal(true)}>Create Ask</Button>
           </div>
         </div>
         <div className="border p-4">
@@ -419,7 +420,9 @@ const AdminView = () => {
                   </label>
                 </div>
               )}
-              <input className="border p-1" type="submit" />
+              <Button className=" p-1" type="submit">
+                Send
+              </Button>
             </form>
           </div>
         </Modal>
