@@ -46,16 +46,16 @@ const ConnectWalletButton = (props: any) => {
         onClick={handleConnectDisconnect}
         {...props}
       >
-        <div className="flex font-bold items-center text-fgd-1 text-left text-sm">
+        <div className="flex font-bold items-center text-th-fgd-1 text-left text-sm">
           <div className="pr-2">
             <img src={provider?.icon} className="h-5 w-5" />
           </div>
-          <p className="m-0">
+          <div className="m-0 ">
             {connected ? "Disconnect" : "Connect"}
-            <StyledWalletProviderLabel className="font-normal text-th-fgd-3">
+            <StyledWalletProviderLabel className="font-normal text-th-fgd-3 m-0">
               {provider?.name}
             </StyledWalletProviderLabel>
-          </p>
+          </div>
         </div>
       </button>
 

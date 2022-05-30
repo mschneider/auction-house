@@ -90,6 +90,8 @@ const AuctionsList = () => {
     register,
     handleSubmit,
     watch,
+    setValue,
+    getValues,
     formState: { errors },
   } = useForm({
     defaultValues: {
@@ -256,91 +258,77 @@ const AuctionsList = () => {
         >
           <div className="">
             <h2 className="text-xl">Create Auction</h2>
-            <form onSubmit={handleSubmit(createAuction)}>
+            <form
+              onSubmit={handleSubmit(createAuction)}
+              className="space-y-2 my-2"
+            >
               <div>
-                <label className="space-x-2">
-                  <Label>Base Mint:</Label>
-                  <Input {...register("baseMint")} />
-                </label>
+                <Label>Base Mint:</Label>
+                <Input {...register("baseMint")} />
               </div>
 
               <div>
-                <label className="space-x-2">
-                  <Label>Quote Mint:</Label>
-                  <Input {...register("quoteMint")} />
-                </label>
+                <Label>Quote Mint:</Label>
+                <Input {...register("quoteMint")} />
               </div>
 
               <div>
-                <label className="space-x-2">
-                  <Label>Encrypt Asks</Label>
-                  <Input type="checkbox" {...register("areAsksEncrypted")} />
-                </label>
+                <Label>Encrypt Asks</Label>
+                <input
+                  type="checkbox"
+                  {...register("areAsksEncrypted")}
+                ></input>
               </div>
 
               <div>
-                <label className="space-x-2">
-                  <Label>Encrypt Bids</Label>
-                  <Input type="checkbox" {...register("areBidsEncrypted")} />
-                </label>
+                <Label>Encrypt Bids</Label>
+                <input
+                  type="checkbox"
+                  {...register("areBidsEncrypted")}
+                ></input>
               </div>
 
               <div>
-                <label className="space-x-2">
-                  <Label>Min Base Order Size:</Label>
-                  <Input {...register("minBaseOrderSize")} />
-                </label>
+                <Label>Min Base Order Size:</Label>
+                <Input {...register("minBaseOrderSize")} />
               </div>
 
               <div>
-                <label className="space-x-2">
-                  <Label>Tick Size:</Label>
-                  <Input {...register("tickSize")} />
-                </label>
+                <Label>Tick Size:</Label>
+                <Input {...register("tickSize")} />
               </div>
 
               <div>
-                <label className="space-x-2">
-                  <Label>Order Phase Duration (s):</Label>
-                  <Input {...register("orderPhaseLength")} />
-                </label>
+                <Label>Order Phase Duration (s):</Label>
+                <Input {...register("orderPhaseLength")} />
               </div>
 
               <div>
-                <label className="space-x-2">
-                  <Label>Decryption Phase Duration (s):</Label>
-                  <Input {...register("decryptionPhaseLength")} />
-                </label>
+                <Label>Decryption Phase Duration (s):</Label>
+                <Input {...register("decryptionPhaseLength")} />
               </div>
 
               <div>
-                <label className="space-x-2">
-                  <Label>Event Queue Bytes:</Label>
-                  <Input {...register("eventQueueBytes")} />
-                </label>
+                <Label>Event Queue Bytes:</Label>
+                <Input {...register("eventQueueBytes")} />
               </div>
               <div>
-                <label className="space-x-2">
-                  <Label>Bids Bytes:</Label>
-                  <Input {...register("bidsBytes")} />
-                </label>
+                <Label>Bids Bytes:</Label>
+                <Input {...register("bidsBytes")} />
               </div>
               <div>
-                <label className="space-x-2">
-                  <Label>Asks Bytes:</Label>
-                  <Input {...register("asksBytes")} />
-                </label>
+                <Label>Asks Bytes:</Label>
+                <Input {...register("asksBytes")} />
               </div>
               <div>
-                <label className="space-x-2">
-                  <Label>Max Orders (per User):</Label>
-                  <Input {...register("maxOrders")} />
-                </label>
+                <Label>Max Orders (per User):</Label>
+                <Input {...register("maxOrders")} />
               </div>
-
-              <Button className="p-1" type="submit">
-                Create
-              </Button>
+              <div className="flex pt-2">
+                <Button className="ml-auto" type="submit">
+                  Create
+                </Button>
+              </div>
             </form>
           </div>
         </Modal>

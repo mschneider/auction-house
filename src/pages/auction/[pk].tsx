@@ -456,31 +456,27 @@ const AuctionView = () => {
         >
           <div className="">
             <h1>Create Bid</h1>
-            <form onSubmit={handleSubmit(createBid)}>
+            <form onSubmit={handleSubmit(createBid)} className="space-y-2">
               <p>
                 Quote Balance: {Number(quoteAmount!) / 10 ** quoteDecimals!}
               </p>
 
               <div>
-                <label className="space-x-2">
-                  <Label>Amount:</Label>
-                  <Input
-                    type="number"
-                    step="any"
-                    {...register("amount", { valueAsNumber: true })}
-                  />
-                </label>
+                <Label>Amount:</Label>
+                <Input
+                  type="number"
+                  step="any"
+                  {...register("amount", { valueAsNumber: true })}
+                />
               </div>
 
               <div>
-                <label className="space-x-2">
-                  <Label>Price:</Label>
-                  <Input
-                    type="number"
-                    step="any"
-                    {...register("price", { valueAsNumber: true })}
-                  />
-                </label>
+                <Label>Price:</Label>
+                <Input
+                  type="number"
+                  step="any"
+                  {...register("price", { valueAsNumber: true })}
+                />
               </div>
 
               {selected?.auction.areBidsEncrypted && (
@@ -499,7 +495,11 @@ const AuctionView = () => {
                   </label>
                 </div>
               )}
-              <Button type="submit">Send</Button>
+              <div className="flex pt-2">
+                <Button className="ml-auto" type="submit">
+                  Send
+                </Button>
+              </div>
             </form>
           </div>
         </Modal>
