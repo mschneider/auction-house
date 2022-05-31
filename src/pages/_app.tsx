@@ -21,7 +21,7 @@ function MyApp({ Component, pageProps }: AppProps) {
         <header className="flex justify-end">
           <ConnectWalletButton />
         </header>
-        <main className={styles.main}>
+        <main className={styles.main + " bg-th-bkg-2"}>
           <Component {...pageProps} />
         </main>
       </ThemeProvider>

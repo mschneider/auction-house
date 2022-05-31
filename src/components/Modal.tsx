@@ -50,12 +50,12 @@ const Modal: any = React.forwardRef<any, any>((props, ref) => {
             >
               {!hideClose ? (
                 <div className="">
-                  <Button
+                  <button
                     onClick={onClose}
                     className={`absolute right-4 top-4 text-th-fgd-1 hover:text-th-primary focus:outline-none md:right-2 md:top-2`}
                   >
                     <XIcon className={`h-5 w-5`} />
-                  </Button>
+                  </button>
                 </div>
               ) : null}
               {children}

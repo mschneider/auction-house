@@ -208,8 +208,8 @@ const AuctionsList = () => {
   };
 
   return (
-    <>
-      <div className="flex space-x-2 bg-th-bkg-1">
+    <div>
+      <div className="flex space-x-2">
         <h1 className="p-1">Auctions</h1>
         <div className=" p-1">
           {loadingAuctions ? (
@@ -224,7 +224,7 @@ const AuctionsList = () => {
           </Button>
         </div>
       </div>
-      <table className="table-auto bg-th-bkg-4 text-th-fgd-3">
+      <table className="table-auto text-th-fgd-3 w-full">
         <thead>
           <tr>
             <th>PK</th>
@@ -333,7 +333,7 @@ const AuctionsList = () => {
           </div>
         </Modal>
       )}
-    </>
+    </div>
   );
 };
 

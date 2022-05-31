@@ -455,7 +455,7 @@ const AuctionView = () => {
           isOpen={openBidModal}
         >
           <div className="">
-            <h1>Create Bid</h1>
+            <h2>Place your bid</h2>
             <form onSubmit={handleSubmit(createBid)} className="space-y-2">
               <p>
                 Quote Balance: {Number(quoteAmount!) / 10 ** quoteDecimals!}

@@ -8,6 +8,7 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@blockworks-foundation/mango-client": "^3.4.8",
     "@bonfida/aaob": "^0.0.4",
     "@emotion/react": "^11.7.1",
     "@emotion/styled": "^11.6.0",
