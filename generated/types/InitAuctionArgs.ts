@@ -4,13 +4,13 @@ import * as types from "../types" // eslint-disable-line @typescript-eslint/no-u
 import * as borsh from "@project-serum/borsh"
 
 export interface InitAuctionArgsFields {
-  auctionId: Array<number>
+  auctionId: Uint8Array
   startOrderPhase: BN
   endOrderPhase: BN
   endDecryptionPhase: BN
   areAsksEncrypted: boolean
   areBidsEncrypted: boolean
-  naclPubkey: Array<number>
+  naclPubkey: Buffer
   minBaseOrderSize: BN
   tickSize: BN
 }
@@ -28,13 +28,13 @@ export interface InitAuctionArgsJSON {
 }
 
 export class InitAuctionArgs {
-  readonly auctionId: Array<number>
+  readonly auctionId: Uint8Array
   readonly startOrderPhase: BN
   readonly endOrderPhase: BN
   readonly endDecryptionPhase: BN
   readonly areAsksEncrypted: boolean
   readonly areBidsEncrypted: boolean
-  readonly naclPubkey: Array<number>
+  readonly naclPubkey: Buffer
   readonly minBaseOrderSize: BN
   readonly tickSize: BN
 
@@ -70,13 +70,13 @@ export class InitAuctionArgs {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   static fromDecoded(obj: any) {
     return new InitAuctionArgs({
-      auctionId: obj.auctionId,
+      auctionId: Uint8Array.from(obj.auctionId),
       startOrderPhase: obj.startOrderPhase,
       endOrderPhase: obj.endOrderPhase,
       endDecryptionPhase: obj.endDecryptionPhase,
       areAsksEncrypted: obj.areAsksEncrypted,
       areBidsEncrypted: obj.areBidsEncrypted,
-      naclPubkey: Array.from(obj.naclPubkey),
+      naclPubkey: obj.naclPubkey,
       minBaseOrderSize: obj.minBaseOrderSize,
       tickSize: obj.tickSize,
     })
@@ -90,7 +90,11 @@ export class InitAuctionArgs {
       endDecryptionPhase: fields.endDecryptionPhase,
       areAsksEncrypted: fields.areAsksEncrypted,
       areBidsEncrypted: fields.areBidsEncrypted,
-      naclPubkey: Buffer.from(fields.naclPubkey),
+      naclPubkey: Buffer.from(
+        fields.naclPubkey.buffer,
+        fields.naclPubkey.byteOffset,
+        fields.naclPubkey.length
+      ),
       minBaseOrderSize: fields.minBaseOrderSize,
       tickSize: fields.tickSize,
     }
@@ -98,13 +102,13 @@ export class InitAuctionArgs {
 
   toJSON(): InitAuctionArgsJSON {
     return {
-      auctionId: this.auctionId,
+      auctionId: Array.from(this.auctionId.values()),
       startOrderPhase: this.startOrderPhase.toString(),
       endOrderPhase: this.endOrderPhase.toString(),
       endDecryptionPhase: this.endDecryptionPhase.toString(),
       areAsksEncrypted: this.areAsksEncrypted,
       areBidsEncrypted: this.areBidsEncrypted,
-      naclPubkey: this.naclPubkey,
+      naclPubkey: Array.from(this.naclPubkey.values()),
       minBaseOrderSize: this.minBaseOrderSize.toString(),
       tickSize: this.tickSize.toString(),
     }
@@ -112,13 +116,13 @@ export class InitAuctionArgs {
 
   static fromJSON(obj: InitAuctionArgsJSON): InitAuctionArgs {
     return new InitAuctionArgs({
-      auctionId: obj.auctionId,
+      auctionId: Uint8Array.from(obj.auctionId),
       startOrderPhase: new BN(obj.startOrderPhase),
       endOrderPhase: new BN(obj.endOrderPhase),
       endDecryptionPhase: new BN(obj.endDecryptionPhase),
       areAsksEncrypted: obj.areAsksEncrypted,
       areBidsEncrypted: obj.areBidsEncrypted,
-      naclPubkey: obj.naclPubkey,
+      naclPubkey: Buffer.from(obj.naclPubkey),
       minBaseOrderSize: new BN(obj.minBaseOrderSize),
       tickSize: new BN(obj.tickSize),
     })
