@@ -28,7 +28,7 @@ import {
   newEncryptedOrder,
   newOrder,
 } from "../../../generated/instructions";
-import { toFp32, toFpLimitPrice } from "../../../tests/sdk/utils";
+import { toFp32, toFpLimitPrice } from "../../../sdk/utils";
 import { BN } from "@project-serum/anchor";
 import { TOKEN_PROGRAM_ID } from "@solana/spl-token";
 import Button from "../../components/Button";

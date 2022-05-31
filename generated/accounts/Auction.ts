@@ -8,13 +8,13 @@ export interface AuctionFields {
   bump: number
   bumps: types.AobBumpsFields
   authority: PublicKey
-  auctionId: Array<number>
+  auctionId: Uint8Array
   startOrderPhase: BN
   endOrderPhase: BN
   endDecryptionPhase: BN
   areAsksEncrypted: boolean
   areBidsEncrypted: boolean
-  naclPubkey: Array<number>
+  naclPubkey: Buffer
   eventQueue: PublicKey
   bids: PublicKey
   asks: PublicKey
@@ -84,13 +84,13 @@ export class Auction {
   readonly bump: number
   readonly bumps: types.AobBumps
   readonly authority: PublicKey
-  readonly auctionId: Array<number>
+  readonly auctionId: Uint8Array
   readonly startOrderPhase: BN
   readonly endOrderPhase: BN
   readonly endDecryptionPhase: BN
   readonly areAsksEncrypted: boolean
   readonly areBidsEncrypted: boolean
-  readonly naclPubkey: Array<number>
+  readonly naclPubkey: Buffer
   readonly eventQueue: PublicKey
   readonly bids: PublicKey
   readonly asks: PublicKey
@@ -242,13 +242,13 @@ export class Auction {
       bump: dec.bump,
       bumps: types.AobBumps.fromDecoded(dec.bumps),
       authority: dec.authority,
-      auctionId: dec.auctionId,
+      auctionId: Uint8Array.from(dec.auctionId),
       startOrderPhase: dec.startOrderPhase,
       endOrderPhase: dec.endOrderPhase,
       endDecryptionPhase: dec.endDecryptionPhase,
       areAsksEncrypted: dec.areAsksEncrypted,
       areBidsEncrypted: dec.areBidsEncrypted,
-      naclPubkey: Array.from(dec.naclPubkey),
+      naclPubkey: dec.naclPubkey,
       eventQueue: dec.eventQueue,
       bids: dec.bids,
       asks: dec.asks,
@@ -282,13 +282,13 @@ export class Auction {
       bump: this.bump,
       bumps: this.bumps.toJSON(),
       authority: this.authority.toString(),
-      auctionId: this.auctionId,
+      auctionId: Array.from(this.auctionId.values()),
       startOrderPhase: this.startOrderPhase.toString(),
       endOrderPhase: this.endOrderPhase.toString(),
       endDecryptionPhase: this.endDecryptionPhase.toString(),
       areAsksEncrypted: this.areAsksEncrypted,
       areBidsEncrypted: this.areBidsEncrypted,
-      naclPubkey: this.naclPubkey,
+      naclPubkey: Array.from(this.naclPubkey.values()),
       eventQueue: this.eventQueue.toString(),
       bids: this.bids.toString(),
       asks: this.asks.toString(),
@@ -322,13 +322,13 @@ export class Auction {
       bump: obj.bump,
       bumps: types.AobBumps.fromJSON(obj.bumps),
       authority: new PublicKey(obj.authority),
-      auctionId: obj.auctionId,
+      auctionId: Uint8Array.from(obj.auctionId),
       startOrderPhase: new BN(obj.startOrderPhase),
       endOrderPhase: new BN(obj.endOrderPhase),
       endDecryptionPhase: new BN(obj.endDecryptionPhase),
       areAsksEncrypted: obj.areAsksEncrypted,
       areBidsEncrypted: obj.areBidsEncrypted,
-      naclPubkey: obj.naclPubkey,
+      naclPubkey: Buffer.from(obj.naclPubkey),
       eventQueue: new PublicKey(obj.eventQueue),
       bids: new PublicKey(obj.bids),
       asks: new PublicKey(obj.asks),

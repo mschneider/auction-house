@@ -1,24 +1,10 @@
 import * as anchor from "@project-serum/anchor";
 import { BN } from "@project-serum/anchor";
-import {
-  PublicKey,
-  Keypair,
-  Connection,
-  LAMPORTS_PER_SOL,
-} from "@solana/web3.js";
-import {
-  createAssociatedTokenAccount,
-  createMint,
-  createMintToCheckedInstruction,
-  getAccount,
-  getMint,
-  mintTo,
-  TOKEN_PROGRAM_ID,
-} from "@solana/spl-token";
+import { PublicKey, Keypair } from "@solana/web3.js";
+import { createMint, TOKEN_PROGRAM_ID } from "@solana/spl-token";
 import nacl from "tweetnacl";
-import { AuctionHouse } from "../../target/types/auction_house";
-import * as genAccs from "../../generated/accounts";
-import { getAuctionAddresses } from "../../src/utils/findProgramTools";
+import { AuctionHouse } from "../target/types/auction_house";
+import * as genAccs from "../generated/accounts";
 
 export interface Auction {
   // Accounts
@@ -38,7 +24,7 @@ export interface Auction {
   tokenProgram: PublicKey;
   systemProgram: PublicKey;
   // Args
-  auctionId: Array<number>;
+  auctionId: Uint8Array;
   startOrderPhase: BN;
   endOrderPhase: BN;
   endDecryptionPhase: BN;
@@ -46,7 +32,7 @@ export interface Auction {
   areBidsEncrypted: boolean;
   minBaseOrderSize: BN;
   tickSize: BN; // FP32
-  naclPubkey: Array<number>;
+  naclPubkey: Buffer;
   naclKeypair?: nacl.BoxKeyPair;
 }
 
@@ -54,7 +40,7 @@ export async function initAuctionObj(
   program: anchor.Program<AuctionHouse>,
   provider: anchor.Provider,
   wallet: anchor.Wallet,
-  auctionId: Array<number>,
+  auctionId: Uint8Array,
   areAsksEncrypted: boolean,
   areBidsEncrypted: boolean,
   minBaseOrderSize: BN,
@@ -79,9 +65,19 @@ export async function initAuctionObj(
   let tx = new anchor.web3.Transaction();
   let nowBn = new anchor.BN(Date.now() / 1000);
   // let auctionIdArray = Array.from(auctionId);
-  const { auctionPk, quoteVault, baseVault } = await getAuctionAddresses(
-    auctionId,
-    provider.wallet.publicKey,
+  let [auction] = await anchor.web3.PublicKey.findProgramAddress(
+    // TODO toBuffer might not be LE (lower endian) by default
+    [Buffer.from("auction"), auctionId, wallet.publicKey.toBuffer()],
+    program.programId
+  );
+  let [quoteVault] = await anchor.web3.PublicKey.findProgramAddress(
+    // TODO toBuffer might not be LE (lower endian) by default
+    [Buffer.from("quote_vault"), auctionId, wallet.publicKey.toBuffer()],
+    program.programId
+  );
+  let [baseVault] = await anchor.web3.PublicKey.findProgramAddress(
+    // TODO toBuffer might not be LE (lower endian) by default
+    [Buffer.from("base_vault"), auctionId, wallet.publicKey.toBuffer()],
     program.programId
   );
   let eventQueueKeypair = new anchor.web3.Keypair();
@@ -91,10 +87,10 @@ export async function initAuctionObj(
   let asksKeypair = new anchor.web3.Keypair();
   let asks = asksKeypair.publicKey;
   let naclKeypair = nacl.box.keyPair();
-  let naclPubkey = Array.from(naclKeypair.publicKey);
+  let naclPubkey = Buffer.from(naclKeypair.publicKey);
   return {
     auctioneer: wallet.publicKey,
-    auction: auctionPk,
+    auction,
     eventQueue,
     eventQueueKeypair,
     bids,
@@ -128,11 +124,11 @@ export async function fetchAuctionObj(
   program: anchor.Program<AuctionHouse>,
   provider: anchor.Provider,
   authority: PublicKey,
-  auctionId: Array<number>,
+  auctionId: Uint8Array,
   naclKeypair?: nacl.BoxKeyPair
 ): Promise<Auction> {
   let [auction] = await anchor.web3.PublicKey.findProgramAddress(
-    [Buffer.from("auction"), Buffer.from(auctionId), authority.toBuffer()],
+    [Buffer.from("auction"), auctionId, authority.toBuffer()],
     program.programId
   );
   let fetchedAuction = await genAccs.Auction.fetch(

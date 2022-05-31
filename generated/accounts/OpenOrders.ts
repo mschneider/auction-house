@@ -11,7 +11,7 @@ export interface OpenOrdersFields {
   auction: PublicKey
   maxOrders: number
   side: types.SideKind
-  naclPubkey: Array<number>
+  naclPubkey: Buffer
   encryptedOrders: Array<types.EncryptedOrderFields>
   quoteTokenLocked: BN
   quoteTokenFree: BN
@@ -45,7 +45,7 @@ export class OpenOrders {
   readonly auction: PublicKey
   readonly maxOrders: number
   readonly side: types.SideKind
-  readonly naclPubkey: Array<number>
+  readonly naclPubkey: Buffer
   readonly encryptedOrders: Array<types.EncryptedOrder>
   readonly quoteTokenLocked: BN
   readonly quoteTokenFree: BN
@@ -142,7 +142,7 @@ export class OpenOrders {
       auction: dec.auction,
       maxOrders: dec.maxOrders,
       side: types.Side.fromDecoded(dec.side),
-      naclPubkey: Array.from(dec.naclPubkey),
+      naclPubkey: dec.naclPubkey,
       encryptedOrders: dec.encryptedOrders.map((item) =>
         types.EncryptedOrder.fromDecoded(item)
       ),
@@ -163,7 +163,7 @@ export class OpenOrders {
       auction: this.auction.toString(),
       maxOrders: this.maxOrders,
       side: this.side.toJSON(),
-      naclPubkey: this.naclPubkey,
+      naclPubkey: Array.from(this.naclPubkey.values()),
       encryptedOrders: this.encryptedOrders.map((item) => item.toJSON()),
       quoteTokenLocked: this.quoteTokenLocked.toString(),
       quoteTokenFree: this.quoteTokenFree.toString(),
@@ -182,7 +182,7 @@ export class OpenOrders {
       auction: new PublicKey(obj.auction),
       maxOrders: obj.maxOrders,
       side: types.Side.fromJSON(obj.side),
-      naclPubkey: obj.naclPubkey,
+      naclPubkey: Buffer.from(obj.naclPubkey),
       encryptedOrders: obj.encryptedOrders.map((item) =>
         types.EncryptedOrder.fromJSON(item)
       ),

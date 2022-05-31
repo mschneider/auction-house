@@ -1,31 +1,13 @@
 import * as anchor from "@project-serum/anchor";
 import { BN } from "@project-serum/anchor";
-import { Program, ProgramError } from "@project-serum/anchor";
-import {
-  createAssociatedTokenAccount,
-  createMint,
-  createMintToCheckedInstruction,
-  getAccount,
-  getMint,
-  mintTo,
-  TOKEN_PROGRAM_ID,
-} from "@solana/spl-token";
+import { Program } from "@project-serum/anchor";
 import { AuctionHouse } from "../target/types/auction_house";
-import {
-  PublicKey,
-  Keypair,
-  Connection,
-  LAMPORTS_PER_SOL,
-} from "@solana/web3.js";
 import nacl from "tweetnacl";
 
 import * as genInstr from "../generated/instructions";
 import * as genTypes from "../generated/types";
 import * as genAccs from "../generated/accounts";
-import { findProgramAddressSync } from "@project-serum/anchor/dist/cjs/utils/pubkey";
-import { assert, expect } from "chai";
-import { fromCode } from "../generated/errors";
-// import { Side } from "../generated/types";
+import { assert } from "chai";
 import {
   Auction,
   initAuctionObj,
@@ -35,7 +17,7 @@ import {
   toFpLimitPrice,
   getCreateAccountParams,
   sleep,
-} from "./sdk";
+} from "../sdk";
 
 describe("auction-house", () => {
   // Configure the client to use the local cluster.
@@ -47,14 +29,14 @@ describe("auction-house", () => {
   // This is probably a dumb way of doing this, the issue is that auctionId
   // is supposed to be an Array<number> in the InitAuctionArgs/Accounts but a
   // Uint8Array in the seeds
-  const auctionId = Array.from(Buffer.from("123".padEnd(10))); // Can be up to 10 characters long
+  const auctionId = Uint8Array.from(Buffer.from("123".padEnd(10))); // Can be up to 10 characters long
   const areAsksEncrypted = false;
   const areBidsEncrypted = true;
   const minBaseOrderSize = new BN(1000);
   const tickSizeNum = 0.1;
   const tickSize = toFp32(tickSizeNum);
-  const orderPhaseLength = 8;
-  const decryptionPhaseLength = 4;
+  const orderPhaseLength = 10;
+  const decryptionPhaseLength = 6;
   const eventQueueBytes = 1000000;
   const bidsBytes = 64000;
   const asksBytes = 64000;
@@ -256,13 +238,13 @@ describe("auction-house", () => {
     let cipherText_1 = nacl.box(
       plainText,
       nonce_1,
-      Uint8Array.from(auction.naclPubkey),
+      auction.naclPubkey,
       thisBidUser.naclKeypair.secretKey
     );
     let cipherText_2 = nacl.box(
       plainText,
       nonce_2,
-      Uint8Array.from(auction.naclPubkey),
+      auction.naclPubkey,
       thisBidUser.naclKeypair.secretKey
     );
     let tx = new anchor.web3.Transaction();
@@ -271,8 +253,8 @@ describe("auction-house", () => {
         {
           tokenQty,
           naclPubkey: thisBidUser.naclPubkey,
-          nonce: Array.from(nonce_1),
-          cipherText: Array.from(cipherText_1),
+          nonce: Buffer.from(nonce_1),
+          cipherText: Buffer.from(cipherText_1),
         },
         { ...thisBidUser, ...auction }
       )
@@ -282,8 +264,8 @@ describe("auction-house", () => {
         {
           tokenQty,
           naclPubkey: thisBidUser.naclPubkey,
-          nonce: Array.from(nonce_2),
-          cipherText: Array.from(cipherText_2),
+          nonce: Buffer.from(nonce_2),
+          cipherText: Buffer.from(cipherText_2),
         },
         { ...thisBidUser, ...auction }
       )
@@ -323,7 +305,7 @@ describe("auction-house", () => {
 
   it("decrypts order", async () => {
     let thisBidUser = users[1];
-    const sharedKey = Array.from(
+    const sharedKey = Buffer.from(
       nacl.box.before(
         Uint8Array.from(thisBidUser.naclPubkey),
         auction.naclKeypair.secretKey

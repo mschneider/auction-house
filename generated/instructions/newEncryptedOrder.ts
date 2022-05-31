@@ -6,9 +6,9 @@ import { PROGRAM_ID } from "../programId"
 
 export interface NewEncryptedOrderArgs {
   tokenQty: BN
-  naclPubkey: Array<number>
-  nonce: Array<number>
-  cipherText: Array<number>
+  naclPubkey: Buffer
+  nonce: Buffer
+  cipherText: Buffer
 }
 
 export interface NewEncryptedOrderAccounts {
@@ -52,9 +52,21 @@ export function newEncryptedOrder(
   const len = layout.encode(
     {
       tokenQty: args.tokenQty,
-      naclPubkey: Buffer.from(args.naclPubkey),
-      nonce: Buffer.from(args.nonce),
-      cipherText: Buffer.from(args.cipherText),
+      naclPubkey: Buffer.from(
+        args.naclPubkey.buffer,
+        args.naclPubkey.byteOffset,
+        args.naclPubkey.length
+      ),
+      nonce: Buffer.from(
+        args.nonce.buffer,
+        args.nonce.byteOffset,
+        args.nonce.length
+      ),
+      cipherText: Buffer.from(
+        args.cipherText.buffer,
+        args.cipherText.byteOffset,
+        args.cipherText.length
+      ),
     },
     buffer
   )
