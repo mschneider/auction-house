@@ -455,30 +455,28 @@ const AuctionView = () => {
           isOpen={openBidModal}
         >
           <div className="">
-            <h2>Place your bid</h2>
+            <h2 className="mb-5">Place your bid</h2>
             <form onSubmit={handleSubmit(createBid)} className="space-y-2">
               <p>
                 Quote Balance: {Number(quoteAmount!) / 10 ** quoteDecimals!}
               </p>
 
               <div>
-                <Label>Amount:</Label>
-                <Input
-                  type="number"
-                  step="any"
-                  {...register("amount", { valueAsNumber: true })}
-                />
-              </div>
-
-              <div>
-                <Label>Price:</Label>
+                <Label>Bid Price:</Label>
                 <Input
                   type="number"
                   step="any"
                   {...register("price", { valueAsNumber: true })}
                 />
               </div>
-
+              <div>
+                <Label>Bid Amount:</Label>
+                <Input
+                  type="number"
+                  step="any"
+                  {...register("amount", { valueAsNumber: true })}
+                />
+              </div>
               {selected?.auction.areBidsEncrypted && (
                 <div>
                   <label className="space-x-2">
@@ -497,7 +495,7 @@ const AuctionView = () => {
               )}
               <div className="flex pt-2">
                 <Button className="ml-auto" type="submit">
-                  Send
+                  Place bid
                 </Button>
               </div>
             </form>
