@@ -8,6 +8,8 @@ export interface BidJSON {
 }
 
 export class Bid {
+  static readonly discriminator = 0
+  static readonly kind = "Bid"
   readonly discriminator = 0
   readonly kind = "Bid"
 
@@ -29,6 +31,8 @@ export interface AskJSON {
 }
 
 export class Ask {
+  static readonly discriminator = 1
+  static readonly kind = "Ask"
   readonly discriminator = 1
   readonly kind = "Ask"
 

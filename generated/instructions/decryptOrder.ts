@@ -5,7 +5,7 @@ import * as types from "../types" // eslint-disable-line @typescript-eslint/no-u
 import { PROGRAM_ID } from "../programId"
 
 export interface DecryptOrderArgs {
-  sharedKey: Array<number>
+  sharedKey: Buffer
 }
 
 export interface DecryptOrderAccounts {
@@ -35,7 +35,11 @@ export function decryptOrder(
   const buffer = Buffer.alloc(1000)
   const len = layout.encode(
     {
-      sharedKey: Buffer.from(args.sharedKey),
+      sharedKey: Buffer.from(
+        args.sharedKey.buffer,
+        args.sharedKey.byteOffset,
+        args.sharedKey.length
+      ),
     },
     buffer
   )

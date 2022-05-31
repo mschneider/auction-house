@@ -11,7 +11,7 @@ import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import useAuctionStore, { fetchAuctions } from "../stores/AuctionStore";
 import * as nacl from "tweetnacl";
-import { Auction, getCreateAccountParams, toFp32 } from "../../tests/sdk";
+import { Auction, getCreateAccountParams, toFp32 } from "../../sdk";
 import { initAuction } from "../../generated/instructions";
 import { Auction as GenAuction } from "../../generated/accounts";
 import { TOKEN_PROGRAM_ID } from "@solana/spl-token";

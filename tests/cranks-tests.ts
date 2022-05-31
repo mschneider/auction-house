@@ -1,10 +1,10 @@
+import { assert } from "chai";
+import nacl from "tweetnacl";
+import { EventQueue } from "@bonfida/aaob";
 import * as anchor from "@project-serum/anchor";
-import { PublicKey, SYSVAR_STAKE_HISTORY_PUBKEY } from "@solana/web3.js";
-import { BN } from "@project-serum/anchor";
-import { Program } from "@project-serum/anchor";
+import { BN, Program } from "@project-serum/anchor";
 import { AuctionHouse } from "../target/types/auction_house";
 import {
-  Auction,
   initAuctionObj,
   fetchAuctionObj,
   User,
@@ -16,24 +16,16 @@ import {
   fetchUsers,
   calcClearingPriceCrank,
   matchOrdersCrank,
-} from "./sdk";
-
-import * as genInstr from "../generated/instructions";
-import * as genTypes from "../generated/types";
-import * as genAccs from "../generated/accounts";
-import { Transaction } from "@solana/web3.js";
-import { assert } from "chai";
-import nacl from "tweetnacl";
-import { types } from "util";
-import { AccountDiscriminatorAlreadySet } from "../generated/errors/anchor";
-import { EventFill, EventOut, EventQueue } from "@bonfida/aaob";
+} from "../sdk";
 import {
   consumeEventsCrank,
   decryptOrdersCrank,
   settleAndCloseOpenOrdersCrank,
-} from "./sdk/cranks";
-import { doesNotMatch } from "assert";
-// import { fetchAuctionObj } from "./sdk/auction";
+} from "../sdk/cranks";
+
+import * as genInstr from "../generated/instructions";
+import * as genTypes from "../generated/types";
+import * as genAccs from "../generated/accounts";
 
 describe("Testing out the cranks for processing the auction phases", () => {
   // Configure the client to use the local cluster.

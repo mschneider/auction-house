@@ -1,13 +1,11 @@
 import * as Side from "./Side"
 
-export { AobBumps, AobBumpsFields, AobBumpsJSON } from "./AobBumps"
-export {
-  EncryptedOrder,
-  EncryptedOrderFields,
-  EncryptedOrderJSON,
-} from "./EncryptedOrder"
-export {
-  InitAuctionArgs,
+export { AobBumps } from "./AobBumps"
+export type { AobBumpsFields, AobBumpsJSON } from "./AobBumps"
+export { EncryptedOrder } from "./EncryptedOrder"
+export type { EncryptedOrderFields, EncryptedOrderJSON } from "./EncryptedOrder"
+export { InitAuctionArgs } from "./InitAuctionArgs"
+export type {
   InitAuctionArgsFields,
   InitAuctionArgsJSON,
 } from "./InitAuctionArgs"
