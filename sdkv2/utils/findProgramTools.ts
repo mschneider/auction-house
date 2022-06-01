@@ -2,7 +2,7 @@ import { PublicKey } from "@solana/web3.js";
 
 type GetAuctionAddressesParams = Parameters<
   (
-    auctionId: Buffer | number[],
+    auctionId: Buffer | number[] | Uint8Array,
     walletPk: PublicKey,
     programPk: PublicKey
   ) => void
@@ -55,7 +55,7 @@ export const getAuctionAddresses = async (
 
 export const findProgramAddressBase = async (
   bufferName: string,
-  param1: Buffer | number[],
+  param1: Buffer | number[] | Uint8Array,
   param2: PublicKey,
   programPk: PublicKey
 ) => {

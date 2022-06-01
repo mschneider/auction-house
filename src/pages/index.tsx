@@ -18,10 +18,10 @@ import Modal from "../components/Modal";
 import useLocalStorageState, {
   handleParseKeyPairArray,
 } from "../hooks/useLocalStorageState";
-import { getAuctionAddresses } from "../utils/findProgramTools";
 import * as dayjs from "dayjs";
 import Button from "../components/Button";
 import Input, { Label } from "../components/Input";
+import { getAuctionAddresses } from "../../sdkv2/utils/findProgramTools";
 const AuctionItem = ({
   pk,
   auction,
