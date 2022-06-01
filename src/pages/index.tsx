@@ -22,6 +22,23 @@ import * as dayjs from "dayjs";
 import Button from "../components/Button";
 import Input, { Label } from "../components/Input";
 import { getAuctionAddresses } from "../../sdkv2/utils/findProgramTools";
+import { createAuctionInstructions } from "../../sdkv2/auction";
+
+interface AuctionForm {
+  baseMint: string;
+  quoteMint: string;
+  areAsksEncrypted: boolean;
+  areBidsEncrypted: boolean;
+  minBaseOrderSize: number;
+  tickSize: number;
+  orderPhaseLength: number;
+  decryptionPhaseLength: number;
+  eventQueueBytes: number;
+  bidsBytes: number;
+  asksBytes: number;
+  maxOrders: number;
+}
+
 const AuctionItem = ({
   pk,
   auction,
@@ -89,9 +106,6 @@ const AuctionsList = () => {
   const {
     register,
     handleSubmit,
-    watch,
-    setValue,
-    getValues,
     formState: { errors },
   } = useForm({
     defaultValues: {
@@ -113,95 +127,24 @@ const AuctionsList = () => {
   useEffect(() => {
     fetchAuctions();
   }, []);
-  const createAuction = async (data: any) => {
+  const createAuction = async (data: AuctionForm) => {
     console.log(data);
     const provider = getProvider();
-    console.log("auction", data, provider);
-
     let tx = new Transaction();
-
-    const auctionId = Buffer.alloc(10);
-    auctionId.writeUIntLE(Date.now(), 0, 6);
-
-    let nowBn = new BN(Date.now() / 1000);
-    // let auctionIdArray = Array.from(auctionId);
-    const { auctionPk, quoteVault, baseVault } = await getAuctionAddresses(
-      auctionId,
-      provider.wallet.publicKey,
-      program.programId
-    );
-    let eventQueueKeypair = new Keypair();
-    let eventQueue = eventQueueKeypair.publicKey;
-    let bidsKeypair = new Keypair();
-    let bids = bidsKeypair.publicKey;
-    let asksKeypair = new Keypair();
-    let asks = asksKeypair.publicKey;
-    let localAuctionKey = nacl.box.keyPair();
-    setLocalAuctionKeys(localAuctionKeys.concat([localAuctionKey]));
-
-    const auction: Auction = {
+    const auctionObj = await createAuctionInstructions({
       ...data,
-      auctioneer: provider.wallet.publicKey,
-      auction: auctionPk,
-      eventQueue,
-      eventQueueKeypair,
-      bids,
-      bidsKeypair,
-      asks,
-      asksKeypair,
-      quoteMint: new PublicKey(data.quoteMint),
+      connection: provider.connection,
+      wallet: provider.wallet.publicKey,
+      programId: program.programId,
       baseMint: new PublicKey(data.baseMint),
-      quoteVault,
-      baseVault,
-      rent: SYSVAR_RENT_PUBKEY,
-      tokenProgram: TOKEN_PROGRAM_ID,
-      systemProgram: SystemProgram.programId,
-      // Args
-      auctionId,
-      startOrderPhase: nowBn,
-      endOrderPhase: nowBn.add(new BN(data.orderPhaseLength)),
-      endDecryptionPhase: nowBn.add(
-        new BN(data.orderPhaseLength + data.decryptionPhaseLength)
-      ),
-      minBaseOrderSize: new BN(data.minBaseOrderSize),
-      tickSize: toFp32(data.tickSize),
-      naclPubkey: localAuctionKey.publicKey,
-    };
-
-    console.log("auction", auction.auctioneer.toBase58());
-
-    let eventQueueParams = await getCreateAccountParams(
-      program,
-      provider,
-      provider.wallet as any,
-      eventQueue,
-      data.eventQueueBytes
+      quoteMint: new PublicKey(data.quoteMint),
+    });
+    tx.add(...auctionObj.transactionInstructions);
+    setLocalAuctionKeys(localAuctionKeys.concat([auctionObj.localAuctionKey]));
+    await provider.send(tx, [...auctionObj.signers], { skipPreflight: true });
+    let thisAuction = await program.account.auction.fetch(
+      auctionObj.auction.auction
     );
-    tx.add(SystemProgram.createAccount(eventQueueParams));
-    let bidsParams = await getCreateAccountParams(
-      program,
-      provider,
-      provider.wallet as any,
-      bids,
-      data.bidsBytes
-    );
-    tx.add(SystemProgram.createAccount(bidsParams));
-    let asksParams = await getCreateAccountParams(
-      program,
-      provider,
-      provider.wallet as any,
-      auction.asks,
-      data.asksBytes
-    );
-    tx.add(SystemProgram.createAccount(asksParams));
-    tx.add(initAuction({ args: { ...auction } }, { ...auction }));
-    await provider.send(
-      tx,
-      [auction.eventQueueKeypair, auction.bidsKeypair, auction.asksKeypair],
-      { skipPreflight: true }
-    );
-
-    let thisAuction = await program.account.auction.fetch(auction.auction);
 
     fetchAuctions();
     console.log(thisAuction);

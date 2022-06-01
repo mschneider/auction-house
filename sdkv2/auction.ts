@@ -6,12 +6,14 @@ import {
   Transaction,
   SystemProgram,
   Connection,
+  TransactionInstruction,
 } from "@solana/web3.js";
 import { TOKEN_PROGRAM_ID } from "@solana/spl-token";
 import nacl from "tweetnacl";
 import { getAuctionAddresses } from "./utils/findProgramTools";
 import dayjs from "dayjs";
 import { handleCreateAuctionParams, toFp32 } from "./utils/tools";
+import { initAuction } from "../generated/instructions";
 
 export interface Auction {
   // Accounts
@@ -43,61 +45,67 @@ export interface Auction {
   naclKeypair?: nacl.BoxKeyPair;
 }
 
-export async function getAuctionObj({
-  programId,
-  wallet,
-  auctionId,
-  baseMint,
-  quoteMint,
-  areAsksEncrypted,
-  areBidsEncrypted,
-  minBaseOrderSize,
-  tickSize,
-  orderPhaseLength,
-  decryptionPhaseLength,
-}: CreateAuctionArgs): Promise<Auction> {
-  let nowBn = new anchor.BN(Date.now() / 1000);
-  const { auctionPk, quoteVault, baseVault } = await getAuctionAddresses(
-    auctionId,
+export class Auction implements Auction {
+  programId: PublicKey;
+  constructor({
+    programId,
     wallet,
-    programId
-  );
-  let eventQueueKeypair = new anchor.web3.Keypair();
-  let eventQueue = eventQueueKeypair.publicKey;
-  let bidsKeypair = new anchor.web3.Keypair();
-  let bids = bidsKeypair.publicKey;
-  let asksKeypair = new anchor.web3.Keypair();
-  let asks = asksKeypair.publicKey;
-  let naclKeypair = nacl.box.keyPair();
-  let naclPubkey = Buffer.from(naclKeypair.publicKey);
-  return {
-    auctioneer: wallet,
-    auction: auctionPk,
-    eventQueue,
-    eventQueueKeypair,
-    bids,
-    bidsKeypair,
-    asks,
-    asksKeypair,
-    quoteMint,
-    baseMint,
-    quoteVault,
-    baseVault,
-    rent: anchor.web3.SYSVAR_RENT_PUBKEY,
-    tokenProgram: TOKEN_PROGRAM_ID,
-    systemProgram: anchor.web3.SystemProgram.programId,
-    // Args
     auctionId,
-    startOrderPhase: nowBn,
-    endOrderPhase: nowBn.add(BN(orderPhaseLength)),
-    endDecryptionPhase: nowBn.add(BN(orderPhaseLength + decryptionPhaseLength)),
+    baseMint,
+    quoteMint,
     areAsksEncrypted,
     areBidsEncrypted,
-    naclKeypair,
-    naclPubkey,
-    minBaseOrderSize: new BN(minBaseOrderSize),
-    tickSize: toFp32(tickSize),
-  };
+    minBaseOrderSize,
+    tickSize,
+    orderPhaseLength,
+    decryptionPhaseLength,
+  }: CreateAuctionArgs) {
+    const nowBn = new anchor.BN(Date.now() / 1000);
+    const eventQueueKeypair = new anchor.web3.Keypair();
+    const eventQueue = eventQueueKeypair.publicKey;
+    const bidsKeypair = new anchor.web3.Keypair();
+    const bids = bidsKeypair.publicKey;
+    const asksKeypair = new anchor.web3.Keypair();
+    const asks = asksKeypair.publicKey;
+    const localAuctionKey = nacl.box.keyPair();
+    this.auctioneer = wallet;
+    this.eventQueue = eventQueue;
+    this.eventQueueKeypair = eventQueueKeypair;
+    this.bids = bids;
+    this.bidsKeypair = bidsKeypair;
+    this.asks = asks;
+    this.asksKeypair = asksKeypair;
+    this.quoteMint = quoteMint;
+    this.baseMint = baseMint;
+    this.rent = anchor.web3.SYSVAR_RENT_PUBKEY;
+    this.tokenProgram = TOKEN_PROGRAM_ID;
+    this.systemProgram = anchor.web3.SystemProgram.programId;
+    // Args
+    this.auctionId = auctionId;
+    this.startOrderPhase = nowBn;
+    this.endOrderPhase = nowBn.add(BN(orderPhaseLength));
+    this.endDecryptionPhase = nowBn.add(
+      BN(orderPhaseLength + decryptionPhaseLength)
+    );
+    this.areAsksEncrypted = areAsksEncrypted;
+    this.areBidsEncrypted = areBidsEncrypted;
+    this.naclKeypair = localAuctionKey;
+    this.naclPubkey = Buffer.from(localAuctionKey.publicKey);
+    this.minBaseOrderSize = new BN(minBaseOrderSize);
+    this.tickSize = toFp32(tickSize);
+    this.programId = programId;
+  }
+  async init() {
+    const { auctionPk, quoteVault, baseVault } = await getAuctionAddresses(
+      this.auctionId,
+      this.auctioneer,
+      this.programId
+    );
+    this.auction = auctionPk;
+    this.quoteVault = quoteVault;
+    this.baseVault = baseVault;
+    return this;
+  }
 }
 
 interface _CreateAuctionBaseArgs {
@@ -107,8 +115,8 @@ interface _CreateAuctionBaseArgs {
   quoteMint: PublicKey;
   areAsksEncrypted: boolean;
   areBidsEncrypted: boolean;
-  minBaseOrderSize: BN;
-  tickSize: BN; // FP32
+  minBaseOrderSize: number;
+  tickSize: number; // FP32
   orderPhaseLength: number;
   decryptionPhaseLength: number;
   eventQueueBytes: number;
@@ -116,18 +124,16 @@ interface _CreateAuctionBaseArgs {
   asksBytes: number;
   maxOrders: number;
 }
-
 export interface CreateAuctionArgs extends _CreateAuctionBaseArgs {
   auctionId: Buffer;
 }
 
-export interface GetCreateAuctionInstructionsArgs
-  extends _CreateAuctionBaseArgs {
+export interface CreateAuctionInstructionsArgs extends _CreateAuctionBaseArgs {
   auctionId?: Buffer;
   connection: Connection;
 }
 
-export const getCreateAuctionInstructions = async ({
+export const createAuctionInstructions = async ({
   connection,
   wallet,
   programId,
@@ -143,17 +149,16 @@ export const getCreateAuctionInstructions = async ({
   bidsBytes,
   asksBytes,
   maxOrders,
-}: GetCreateAuctionInstructionsArgs) => {
-  const transactions = new Transaction();
+}: CreateAuctionInstructionsArgs): Promise<{
+  transactionInstructions: TransactionInstruction[];
+  auction: Auction;
+  localAuctionKey: nacl.BoxKeyPair;
+  signers: Keypair[];
+}> => {
+  const transactionInstructions: TransactionInstruction[] = [];
   const auctionId = Buffer.alloc(10);
   auctionId.writeUIntLE(dayjs().valueOf(), 0, 6);
-  const nowBn = new BN(dayjs().unix());
-  const { auctionPk, quoteVault, baseVault } = await getAuctionAddresses(
-    auctionId,
-    wallet,
-    programId
-  );
-  const auctionObj = await getAuctionObj({
+  const auction = await new Auction({
     wallet,
     programId,
     baseMint,
@@ -169,30 +174,43 @@ export const getCreateAuctionInstructions = async ({
     asksBytes,
     maxOrders,
     auctionId,
-  });
-  let eventQueueParams = await handleCreateAuctionParams({
+  }).init();
+  const eventQueueParams = await handleCreateAuctionParams({
     programId,
     wallet,
-    newPubkey: auctionObj.eventQueue,
+    newPubkey: auction.eventQueue,
     space: eventQueueBytes,
     connection: connection,
   });
-  transactions.add(SystemProgram.createAccount(eventQueueParams));
-  let bidsParams = await handleCreateAuctionParams({
+  transactionInstructions.push(SystemProgram.createAccount(eventQueueParams));
+  const bidsParams = await handleCreateAuctionParams({
     programId,
     wallet,
-    newPubkey: auctionObj.bids,
+    newPubkey: auction.bids,
     space: bidsBytes,
     connection: connection,
   });
-  transactions.add(SystemProgram.createAccount(bidsParams));
-  let asksParams = await handleCreateAuctionParams({
+  transactionInstructions.push(SystemProgram.createAccount(bidsParams));
+  const asksParams = await handleCreateAuctionParams({
     programId,
     wallet,
-    newPubkey: auctionObj.asks,
+    newPubkey: auction.asks,
     space: asksBytes,
     connection: connection,
   });
-  transactions.add(SystemProgram.createAccount(asksParams));
-  transactions.add(initAuction({ args: { ...auction } }, { ...auction }));
+  transactionInstructions.push(SystemProgram.createAccount(asksParams));
+  transactionInstructions.push(
+    initAuction({ args: { ...auction } }, { ...auction })
+  );
+  const signers = [
+    auction.eventQueueKeypair,
+    auction.bidsKeypair,
+    auction.asksKeypair,
+  ];
+  return {
+    transactionInstructions,
+    signers,
+    auction,
+    localAuctionKey: auction.naclKeypair,
+  };
 };
