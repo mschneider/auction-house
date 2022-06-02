@@ -8,8 +8,8 @@ type GetAuctionAddressesParams = Parameters<
   ) => void
 >;
 
-export const getAuctionPk = async (...args: GetAuctionAddressesParams) => {
-  const auction = await findProgramAddressBase(
+export const getauctionPk = async (...args: GetAuctionAddressesParams) => {
+  const auction = await findAuctionProgramAddressBase(
     "auction",
     args[0],
     args[1],
@@ -19,7 +19,7 @@ export const getAuctionPk = async (...args: GetAuctionAddressesParams) => {
 };
 
 export const getQuoteVaultPk = async (...args: GetAuctionAddressesParams) => {
-  const quoteVault = await findProgramAddressBase(
+  const quoteVault = await findAuctionProgramAddressBase(
     "quote_vault",
     args[0],
     args[1],
@@ -29,7 +29,7 @@ export const getQuoteVaultPk = async (...args: GetAuctionAddressesParams) => {
 };
 
 export const getBaseVaultPk = async (...args: GetAuctionAddressesParams) => {
-  const baseVault = await findProgramAddressBase(
+  const baseVault = await findAuctionProgramAddressBase(
     "base_vault",
     args[0],
     args[1],
@@ -42,7 +42,7 @@ export const getAuctionAddresses = async (
   ...args: GetAuctionAddressesParams
 ) => {
   const [auctionPk, quoteVault, baseVault] = await Promise.all([
-    getAuctionPk(args[0], args[1], args[2]),
+    getauctionPk(args[0], args[1], args[2]),
     getQuoteVaultPk(args[0], args[1], args[2]),
     getBaseVaultPk(args[0], args[1], args[2]),
   ]);
@@ -53,7 +53,43 @@ export const getAuctionAddresses = async (
   };
 };
 
-export const findProgramAddressBase = async (
+export const getOpenOrdersPk = async (
+  wallet: PublicKey,
+  auctionId: Uint8Array,
+  auctionAuthority: PublicKey,
+  programId: PublicKey
+) => {
+  const [openOrdersPk] = await PublicKey.findProgramAddress(
+    [
+      wallet.toBuffer(),
+      Buffer.from("open_orders"),
+      Buffer.from(auctionId),
+      auctionAuthority.toBuffer(),
+    ],
+    programId
+  );
+  return openOrdersPk;
+};
+
+export const getOrderHistoryPk = async (
+  wallet: PublicKey,
+  auctionId: Uint8Array,
+  auctionAuthority: PublicKey,
+  programId: PublicKey
+) => {
+  const [orderHistoryPk] = await PublicKey.findProgramAddress(
+    [
+      wallet.toBuffer(),
+      Buffer.from("order_history"),
+      Buffer.from(auctionId),
+      auctionAuthority.toBuffer(),
+    ],
+    programId
+  );
+  return orderHistoryPk;
+};
+
+export const findAuctionProgramAddressBase = async (
   bufferName: string,
   param1: Buffer | number[] | Uint8Array,
   param2: PublicKey,

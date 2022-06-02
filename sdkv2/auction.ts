@@ -10,7 +10,11 @@ import {
 } from "@solana/web3.js";
 import { TOKEN_PROGRAM_ID } from "@solana/spl-token";
 import nacl from "tweetnacl";
-import { getAuctionAddresses } from "./utils/findProgramTools";
+import {
+  getAuctionAddresses,
+  getOpenOrdersPk,
+  getOrderHistoryPk,
+} from "./utils/findProgramTools";
 import dayjs from "dayjs";
 import { handleCreateAuctionParams, toFp32 } from "./utils/tools";
 import {
@@ -52,6 +56,21 @@ export interface AuctionArgs {
   naclKeypair?: nacl.BoxKeyPair;
 }
 
+export interface CreateAskInstructionsArgs {
+  wallet: PublicKey;
+  programId: PublicKey;
+  connection: Connection;
+  amount: number;
+  deposit: number;
+  price: number;
+  auction: Auction;
+  quoteToken: PublicKey;
+  baseToken: PublicKey;
+  localOrderKey: nacl.BoxKeyPair;
+  quoteDecimals: number;
+  baseDecimals: number;
+  auctionPk: PublicKey;
+}
 export class AuctionArgs implements AuctionArgs {
   programId: PublicKey;
   constructor({
@@ -222,22 +241,6 @@ export const createAuctionInstructions = async ({
   };
 };
 
-export interface CreateAskInstructionsArgs {
-  wallet: PublicKey;
-  programId: PublicKey;
-  connection: Connection;
-  amount: number;
-  deposit: number;
-  price: number;
-  auction: Auction;
-  quoteToken: PublicKey;
-  baseToken: PublicKey;
-  localOrderKey: nacl.BoxKeyPair;
-  quoteDecimals: number;
-  baseDecimals: number;
-  auctionPk: PublicKey;
-}
-
 export const createAskInstructions = async ({
   connection,
   amount,
@@ -254,22 +257,16 @@ export const createAskInstructions = async ({
   localOrderKey,
 }: CreateAskInstructionsArgs): Promise<TransactionInstruction[]> => {
   const transactionInstructions: TransactionInstruction[] = [];
-  const [openOrdersPk] = await PublicKey.findProgramAddress(
-    [
-      wallet.toBuffer(),
-      Buffer.from("open_orders"),
-      Buffer.from(auction.auctionId),
-      auction.authority.toBuffer(),
-    ],
+  const openOrdersPk = await getOpenOrdersPk(
+    wallet,
+    auction.auctionId,
+    auction.authority,
     programId
   );
-  const [orderHistoryPk] = await PublicKey.findProgramAddress(
-    [
-      wallet.toBuffer(),
-      Buffer.from("order_history"),
-      Buffer.from(auction.auctionId),
-      auction.authority.toBuffer(),
-    ],
+  const orderHistoryPk = await getOrderHistoryPk(
+    wallet,
+    auction.auctionId,
+    auction.authority,
     programId
   );
   const openOrders = await OpenOrders.fetch(connection, openOrdersPk);
@@ -292,64 +289,28 @@ export const createAskInstructions = async ({
     );
   }
   if (auction.areAsksEncrypted) {
-    // convert into native values
-    let fp32Price = toFp32(price).shln(32).div(auction.tickSize);
-    let quantity = new BN(amount * Math.pow(10, baseDecimals));
-    let tokenQty = new BN(deposit * Math.pow(10, quoteDecimals));
-
-    // encrypt native values
-    let plainText = Buffer.concat(
-      [fp32Price, quantity].map((bn) => {
-        return bn.toArrayLike(Buffer, "le", 8);
-      })
-    );
-    const nonce = nacl.randomBytes(nacl.box.nonceLength);
-
-    let cipherText = nacl.box(
-      Uint8Array.from(plainText),
-      nonce,
-      Uint8Array.from(auction.naclPubkey),
-      localOrderKey.secretKey
-    );
-
     transactionInstructions.push(
-      newEncryptedOrder(
-        {
-          tokenQty,
-          naclPubkey: Buffer.from(
-            localOrderKey.publicKey.buffer,
-            localOrderKey.publicKey.byteOffset,
-            localOrderKey.publicKey.length
-          ),
-          nonce: Buffer.from(nonce.buffer, nonce.byteOffset, nonce.length),
-          cipherText: Buffer.from(
-            cipherText.buffer,
-            cipherText.byteOffset,
-            cipherText.length
-          ),
-        },
-        {
-          ...auction,
-
-          user: wallet,
-          auction: new PublicKey(auctionPk),
-          openOrders: openOrdersPk,
-          userQuote: quoteToken,
-          userBase: baseToken,
-          tokenProgram: TOKEN_PROGRAM_ID,
-        }
-      )
+      _newEncryptedOrderInstruction({
+        price,
+        amount,
+        auction,
+        baseDecimals,
+        quoteDecimals,
+        deposit,
+        openOrdersPk,
+        wallet,
+        localOrderKey,
+        quoteToken,
+        baseToken,
+        auctionPk,
+      })
     );
   } else {
     transactionInstructions.push(
       newOrder(
         {
-          limitPrice: new BN(price * 2 ** 32)
-            .shln(32)
-            .div(auction.tickSize)
-            .mul(auction.tickSize)
-            .shrn(32),
-          maxBaseQty: new BN(amount * Math.pow(10, baseDecimals)),
+          limitPrice: _prepareLimitPrice(price, auction.tickSize),
+          maxBaseQty: _prepareMaxBaseQty(amount, baseDecimals),
         },
         {
           ...auction,
@@ -421,76 +382,28 @@ export const createBidInstructions = async ({
     );
   }
   if (auction.areBidsEncrypted) {
-    // convert into native values
-    let fp32Price = toFp32(price).shln(32).div(auction.tickSize);
-    let quantity = new BN(amount * Math.pow(10, baseDecimals));
-    let tokenQty = new BN(deposit * Math.pow(10, quoteDecimals));
-
-    // encrypt native values
-    let plainText = Buffer.concat(
-      [fp32Price, quantity].map((bn) => {
-        return bn.toArrayLike(Buffer, "le", 8);
-      })
-    );
-    const nonce = nacl.randomBytes(nacl.box.nonceLength);
-
-    console.log({
-      plainText,
-      nonce,
-      pk: auction.naclPubkey,
-      sk: localOrderKey.secretKey,
-    });
-    let cipherText = nacl.box(
-      Uint8Array.from(plainText),
-      nonce,
-      Uint8Array.from(auction.naclPubkey),
-      localOrderKey.secretKey
-    );
-
-    // local storage messes up my keys
-    const naclPubkey = Buffer.alloc(nacl.box.publicKeyLength);
-    for (let i = 0; i < nacl.box.publicKeyLength; ++i) {
-      naclPubkey[i] = localOrderKey.publicKey[i];
-    }
-
     transactionInstructions.push(
-      newEncryptedOrder(
-        {
-          tokenQty,
-          naclPubkey: Buffer.from(
-            localOrderKey.publicKey.buffer,
-            localOrderKey.publicKey.byteOffset,
-            localOrderKey.publicKey.length
-          ),
-          nonce: Buffer.from(nonce.buffer, nonce.byteOffset, nonce.length),
-          cipherText: Buffer.from(
-            cipherText.buffer,
-            cipherText.byteOffset,
-            cipherText.length
-          ),
-        },
-        {
-          ...auction,
-
-          user: wallet,
-          auction: new PublicKey(auctionPk),
-          openOrders: openOrdersPk,
-          userQuote: quoteToken,
-          userBase: baseToken,
-          tokenProgram: TOKEN_PROGRAM_ID,
-        }
-      )
+      _newEncryptedOrderInstruction({
+        price,
+        amount,
+        auction,
+        baseDecimals,
+        quoteDecimals,
+        deposit,
+        openOrdersPk,
+        wallet,
+        localOrderKey,
+        quoteToken,
+        baseToken,
+        auctionPk,
+      })
     );
   } else {
     transactionInstructions.push(
       newOrder(
         {
-          limitPrice: new BN(price * 2 ** 32)
-            .shln(32)
-            .div(auction.tickSize)
-            .mul(auction.tickSize)
-            .shrn(32),
-          maxBaseQty: new BN(amount * Math.pow(10, baseDecimals)),
+          limitPrice: _prepareLimitPrice(price, auction.tickSize),
+          maxBaseQty: _prepareMaxBaseQty(amount, baseDecimals),
         },
         {
           ...auction,
@@ -505,4 +418,86 @@ export const createBidInstructions = async ({
     );
   }
   return transactionInstructions;
+};
+
+const _prepareLimitPrice = (price: number, tickSize: number) => {
+  return new BN(price * 2 ** 32).shln(32).div(tickSize).mul(tickSize).shrn(32);
+};
+const _prepareMaxBaseQty = (amount: number, baseDecimals: number) => {
+  return new BN(amount * Math.pow(10, baseDecimals));
+};
+
+const _newEncryptedOrderInstruction = ({
+  price,
+  amount,
+  auction,
+  baseDecimals,
+  quoteDecimals,
+  deposit,
+  localOrderKey,
+  wallet,
+  openOrdersPk,
+  quoteToken,
+  baseToken,
+  auctionPk,
+}: {
+  price: number;
+  amount: number;
+  auction: Auction;
+  baseDecimals: number;
+  quoteDecimals: number;
+  deposit: number;
+  localOrderKey: nacl.BoxKeyPair;
+  wallet: PublicKey;
+  openOrdersPk: PublicKey;
+  quoteToken: PublicKey;
+  baseToken: PublicKey;
+  auctionPk: PublicKey;
+}) => {
+  // convert into native values
+  let fp32Price = toFp32(price).shln(32).div(auction.tickSize);
+  let quantity = new BN(amount * Math.pow(10, baseDecimals));
+  let tokenQty = new BN(deposit * Math.pow(10, quoteDecimals));
+
+  // encrypt native values
+  let plainText = Buffer.concat(
+    [fp32Price, quantity].map((bn) => {
+      return bn.toArrayLike(Buffer, "le", 8);
+    })
+  );
+  const nonce = nacl.randomBytes(nacl.box.nonceLength);
+
+  let cipherText = nacl.box(
+    Uint8Array.from(plainText),
+    nonce,
+    Uint8Array.from(auction.naclPubkey),
+    localOrderKey.secretKey
+  );
+
+  return newEncryptedOrder(
+    {
+      tokenQty,
+      naclPubkey: Buffer.from(
+        localOrderKey.publicKey.buffer,
+        localOrderKey.publicKey.byteOffset,
+        localOrderKey.publicKey.length
+      ),
+      nonce: Buffer.from(nonce.buffer, nonce.byteOffset, nonce.length),
+      cipherText: Buffer.from(
+        cipherText.buffer,
+        cipherText.byteOffset,
+        cipherText.length
+      ),
+    },
+    {
+      ...auction,
+
+      user: wallet,
+      auction: new PublicKey(auctionPk),
+      openOrders: openOrdersPk,
+      userQuote: quoteToken,
+      userBase: baseToken,
+      tokenProgram: TOKEN_PROGRAM_ID,
+    }
+  );
 };
