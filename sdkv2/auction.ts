@@ -18,6 +18,7 @@ import {
 import dayjs from "dayjs";
 import { handleCreateAuctionParams, toFp32 } from "./utils/tools";
 import {
+  cancelEncryptedOrder,
   initAuction,
   initOpenOrders,
   newEncryptedOrder,
@@ -290,7 +291,7 @@ export const createAskInstructions = async ({
   }
   if (auction.areAsksEncrypted) {
     transactionInstructions.push(
-      _newEncryptedOrderInstruction({
+      ..._newEncryptedOrderInstructions({
         price,
         amount,
         auction,
@@ -377,7 +378,7 @@ export const createBidInstructions = async ({
   }
   if (auction.areBidsEncrypted) {
     transactionInstructions.push(
-      _newEncryptedOrderInstruction({
+      ..._newEncryptedOrderInstructions({
         price,
         amount,
         auction,
@@ -414,6 +415,48 @@ export const createBidInstructions = async ({
   return transactionInstructions;
 };
 
+export const cancelEncryptedOrderInstructions = async ({
+  wallet,
+  auction,
+  programId,
+  orderIdx,
+  auctionPk,
+  quoteToken,
+  baseToken,
+}: {
+  wallet: PublicKey;
+  auction: Auction;
+  programId: PublicKey;
+  orderIdx: number;
+  auctionPk: PublicKey;
+  quoteToken: PublicKey;
+  baseToken: PublicKey;
+}): Promise<TransactionInstruction[]> => {
+  const transactionInstructions: TransactionInstruction[] = [];
+  const openOrdersPk = await getOpenOrdersPk(
+    wallet,
+    auction.auctionId,
+    auction.authority,
+    programId
+  );
+
+  transactionInstructions.push(
+    cancelEncryptedOrder(
+      { orderIdx: orderIdx },
+      {
+        ...auction,
+        user: wallet!,
+        auction: new PublicKey(auctionPk),
+        openOrders: openOrdersPk,
+        userQuote: quoteToken,
+        userBase: baseToken,
+        tokenProgram: TOKEN_PROGRAM_ID,
+      }
+    )
+  );
+  return transactionInstructions;
+};
+
 const _prepareLimitPrice = (price: number, tickSize: number) => {
   return new BN(price * 2 ** 32).shln(32).div(tickSize).mul(tickSize).shrn(32);
 };
@@ -421,7 +464,7 @@ const _prepareMaxBaseQty = (amount: number, baseDecimals: number) => {
   return new BN(amount * Math.pow(10, baseDecimals));
 };
 
-const _newEncryptedOrderInstruction = ({
+const _newEncryptedOrderInstructions = ({
   price,
   amount,
   auction,
@@ -447,7 +490,8 @@ const _newEncryptedOrderInstruction = ({
   quoteToken: PublicKey;
   baseToken: PublicKey;
   auctionPk: PublicKey;
-}) => {
+}): TransactionInstruction[] => {
+  const transactionInstructions: TransactionInstruction[] = [];
   // convert into native values
   let fp32Price = toFp32(price).shln(32).div(auction.tickSize);
   let quantity = new BN(amount * Math.pow(10, baseDecimals));
@@ -468,30 +512,33 @@ const _newEncryptedOrderInstruction = ({
     localOrderKey.secretKey
   );
 
-  return newEncryptedOrder(
-    {
-      tokenQty,
-      naclPubkey: Buffer.from(
-        localOrderKey.publicKey.buffer,
-        localOrderKey.publicKey.byteOffset,
-        localOrderKey.publicKey.length
-      ),
-      nonce: Buffer.from(nonce.buffer, nonce.byteOffset, nonce.length),
-      cipherText: Buffer.from(
-        cipherText.buffer,
-        cipherText.byteOffset,
-        cipherText.length
-      ),
-    },
-    {
-      ...auction,
+  transactionInstructions.push(
+    newEncryptedOrder(
+      {
+        tokenQty,
+        naclPubkey: Buffer.from(
+          localOrderKey.publicKey.buffer,
+          localOrderKey.publicKey.byteOffset,
+          localOrderKey.publicKey.length
+        ),
+        nonce: Buffer.from(nonce.buffer, nonce.byteOffset, nonce.length),
+        cipherText: Buffer.from(
+          cipherText.buffer,
+          cipherText.byteOffset,
+          cipherText.length
+        ),
+      },
+      {
+        ...auction,
 
-      user: wallet,
-      auction: new PublicKey(auctionPk),
-      openOrders: openOrdersPk,
-      userQuote: quoteToken,
-      userBase: baseToken,
-      tokenProgram: TOKEN_PROGRAM_ID,
-    }
+        user: wallet,
+        auction: new PublicKey(auctionPk),
+        openOrders: openOrdersPk,
+        userQuote: quoteToken,
+        userBase: baseToken,
+        tokenProgram: TOKEN_PROGRAM_ID,
+      }
+    )
   );
+  return transactionInstructions;
 };
