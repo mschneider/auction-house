@@ -34,7 +34,7 @@ describe("Testing out the cranks for processing the auction phases", () => {
   anchor.setProvider(provider);
   const program = anchor.workspace.AuctionHouse as Program<AuctionHouse>;
 
-  const auctionId = Array.from(Buffer.from("cranks".padEnd(10))); // Can be up to 10 characters long
+  const auctionId = Buffer.from("cranks".padEnd(10)); // Can be up to 10 characters long
   const areAsksEncrypted = false;
   const areBidsEncrypted = true;
   const minBaseOrderSize = new BN(100_000_000); // Min order size of $20 assuming $0.20 token price and 6 decimal places
@@ -297,8 +297,12 @@ describe("Testing out the cranks for processing the auction phases", () => {
           {
             tokenQty,
             naclPubkey: user.naclPubkey,
-            nonce: Array.from(nonce),
-            cipherText: Array.from(cipherText),
+            nonce: Buffer.from(nonce.buffer, nonce.byteOffset, nonce.length),
+            cipherText: Buffer.from(
+              cipherText.buffer,
+              cipherText.byteOffset,
+              cipherText.length
+            ),
           },
           { ...user, ...auctionObj }
         )
