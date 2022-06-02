@@ -19,10 +19,10 @@ import {
   newEncryptedOrder,
   newOrder,
 } from "../generated/instructions";
-import { OpenOrders } from "../generated/accounts";
+import { Auction, OpenOrders } from "../generated/accounts";
 import { Side } from "../generated/types";
 
-export interface Auction {
+export interface AuctionArgs {
   // Accounts
   auctioneer: PublicKey;
   auction: PublicKey;
@@ -52,7 +52,7 @@ export interface Auction {
   naclKeypair?: nacl.BoxKeyPair;
 }
 
-export class Auction implements Auction {
+export class AuctionArgs implements AuctionArgs {
   programId: PublicKey;
   constructor({
     programId,
@@ -158,14 +158,14 @@ export const createAuctionInstructions = async ({
   maxOrders,
 }: CreateAuctionInstructionsArgs): Promise<{
   transactionInstructions: TransactionInstruction[];
-  auction: Auction;
+  auction: AuctionArgs;
   localAuctionKey: nacl.BoxKeyPair;
   signers: Keypair[];
 }> => {
   const transactionInstructions: TransactionInstruction[] = [];
   const auctionId = Buffer.alloc(10);
   auctionId.writeUIntLE(dayjs().valueOf(), 0, 6);
-  const auction = await new Auction({
+  const auction = await new AuctionArgs({
     wallet,
     programId,
     baseMint,
@@ -222,6 +222,22 @@ export const createAuctionInstructions = async ({
   };
 };
 
+export interface createAskInstructionsArgs {
+  wallet: PublicKey;
+  programId: PublicKey;
+  connection: Connection;
+  amount: number;
+  deposit: number;
+  price: number;
+  auction: Auction;
+  quoteToken: PublicKey;
+  baseToken: PublicKey;
+  localOrderKey: nacl.BoxKeyPair;
+  quoteDecimals: number;
+  baseDecimals: number;
+  auctionPk: PublicKey;
+}
+
 export const createAskInstructions = async ({
   connection,
   amount,
@@ -230,13 +246,13 @@ export const createAskInstructions = async ({
   wallet,
   programId,
   auction,
+  auctionPk,
   quoteToken,
   baseToken,
   baseDecimals,
   quoteDecimals,
-  secretKey,
   localOrderKey,
-}) => {
+}: createAskInstructionsArgs) => {
   const transactionInstructions: TransactionInstruction[] = [];
   const [openOrdersPk] = await PublicKey.findProgramAddress(
     [
@@ -262,8 +278,8 @@ export const createAskInstructions = async ({
       initOpenOrders(
         { side: new Side.Ask(), maxOrders: 2 },
         {
-          user: wallet.publicKey!,
-          auction: new PublicKey(auction.auction),
+          user: wallet,
+          auction: new PublicKey(auctionPk),
           openOrders: openOrdersPk,
           orderHistory: orderHistoryPk,
           quoteMint: auction.quoteMint,
@@ -293,13 +309,13 @@ export const createAskInstructions = async ({
       plainText,
       nonce,
       pk: auction.naclPubkey,
-      sk: secretKey,
+      sk: localOrderKey.secretKey,
     });
     let cipherText = nacl.box(
       Uint8Array.from(plainText),
       nonce,
       Uint8Array.from(auction.naclPubkey),
-      secretKey
+      localOrderKey.secretKey
     );
 
     // local storage messes up my keys
@@ -324,8 +340,8 @@ export const createAskInstructions = async ({
         {
           ...auction,
 
-          user: wallet.publicKey!,
-          auction: new PublicKey(auction.auction),
+          user: wallet,
+          auction: new PublicKey(auctionPk),
           openOrders: openOrdersPk,
           userQuote: quoteToken,
           userBase: baseToken,
@@ -346,8 +362,8 @@ export const createAskInstructions = async ({
         },
         {
           ...auction,
-          user: wallet.publicKey!,
-          auction: new PublicKey(auction.auction),
+          user: wallet,
+          auction: new PublicKey(auctionPk),
           openOrders: openOrdersPk,
           userQuote: quoteToken,
           userBase: baseToken,
