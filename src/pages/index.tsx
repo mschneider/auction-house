@@ -2,7 +2,6 @@ import { BN, getProvider } from "@project-serum/anchor";
 import {
   Keypair,
   PublicKey,
-  Signer,
   SystemProgram,
   SYSVAR_RENT_PUBKEY,
   Transaction,
@@ -16,8 +15,13 @@ import { initAuction } from "../../generated/instructions";
 import { Auction as GenAuction } from "../../generated/accounts";
 import { TOKEN_PROGRAM_ID } from "@solana/spl-token";
 import Modal from "../components/Modal";
-import useLocalStorageState from "../hooks/useLocalStorageState";
-
+import useLocalStorageState, {
+  handleParseKeyPairArray,
+} from "../hooks/useLocalStorageState";
+import { getAuctionAddresses } from "../utils/findProgramTools";
+import * as dayjs from "dayjs";
+import Button from "../components/Button";
+import Input, { Label } from "../components/Input";
 const AuctionItem = ({
   pk,
   auction,
@@ -36,15 +40,22 @@ const AuctionItem = ({
       <tr key={pk.toString()}>
         <td>{auction.auctionId}</td>
         <td>
-          {new Date(auction.startOrderPhase.toNumber() * 1000).toLocaleString()}
+          {dayjs
+            .unix(auction.startOrderPhase.toNumber())
+            .toDate()
+            .toLocaleString()}
         </td>
         <td>
-          {new Date(auction.endOrderPhase.toNumber() * 1000).toLocaleString()}
+          {dayjs
+            .unix(auction.endOrderPhase.toNumber())
+            .toDate()
+            .toLocaleString()}
         </td>
         <td>
-          {new Date(
-            auction.endDecryptionPhase.toNumber() * 1000
-          ).toLocaleString()}
+          {dayjs
+            .unix(auction.endDecryptionPhase.toNumber())
+            .toDate()
+            .toLocaleString()}
         </td>
         <td>{auction.clearingPrice.toNumber()}</td>
         <td>{auction.totalQuantityMatched.toNumber()}</td>
@@ -69,7 +80,8 @@ const AuctionsList = () => {
 
   const [localAuctionKeys, setLocalAuctionKeys] = useLocalStorageState(
     "localAuctionKeys",
-    [] as nacl.BoxKeyPair[]
+    [] as nacl.BoxKeyPair[],
+    handleParseKeyPairArray
   );
 
   const [openCreateAuctionModal, setOpenCreateAuctionModal] = useState(false);
@@ -78,6 +90,8 @@ const AuctionsList = () => {
     register,
     handleSubmit,
     watch,
+    setValue,
+    getValues,
     formState: { errors },
   } = useForm({
     defaultValues: {
@@ -99,44 +113,21 @@ const AuctionsList = () => {
   useEffect(() => {
     fetchAuctions();
   }, []);
-
   const createAuction = async (data: any) => {
+    console.log(data);
     const provider = getProvider();
     console.log("auction", data, provider);
 
     let tx = new Transaction();
-    let signers: Signer[] = [];
 
     const auctionId = Buffer.alloc(10);
     auctionId.writeUIntLE(Date.now(), 0, 6);
 
     let nowBn = new BN(Date.now() / 1000);
     // let auctionIdArray = Array.from(auctionId);
-    let [auctionPk] = await PublicKey.findProgramAddress(
-      // TODO toBuffer might not be LE (lower endian) by default
-      [
-        Buffer.from("auction"),
-        Buffer.from(auctionId),
-        provider.wallet.publicKey.toBuffer(),
-      ],
-      program.programId
-    );
-    let [quoteVault] = await PublicKey.findProgramAddress(
-      // TODO toBuffer might not be LE (lower endian) by default
-      [
-        Buffer.from("quote_vault"),
-        Buffer.from(auctionId),
-        provider.wallet.publicKey.toBuffer(),
-      ],
-      program.programId
-    );
-    let [baseVault] = await PublicKey.findProgramAddress(
-      // TODO toBuffer might not be LE (lower endian) by default
-      [
-        Buffer.from("base_vault"),
-        Buffer.from(auctionId),
-        provider.wallet.publicKey.toBuffer(),
-      ],
+    const { auctionPk, quoteVault, baseVault } = await getAuctionAddresses(
+      auctionId,
+      provider.wallet.publicKey,
       program.programId
     );
     let eventQueueKeypair = new Keypair();
@@ -217,23 +208,23 @@ const AuctionsList = () => {
   };
 
   return (
-    <>
+    <div>
       <div className="flex space-x-2">
         <h1 className="p-1">Auctions</h1>
-        <div className="border p-1">
+        <div className=" p-1">
           {loadingAuctions ? (
             "xxxxx"
           ) : (
-            <button onClick={fetchAuctions}>fetch</button>
+            <Button onClick={fetchAuctions}>fetch</Button>
           )}
         </div>
-        <div className="border p-1">
-          <button onClick={() => setOpenCreateAuctionModal(true)}>
+        <div className=" p-1">
+          <Button onClick={() => setOpenCreateAuctionModal(true)}>
             create
-          </button>
+          </Button>
         </div>
       </div>
-      <table className="table-auto">
+      <table className="table-auto text-th-fgd-3 w-full">
         <thead>
           <tr>
             <th>PK</th>
@@ -250,6 +241,7 @@ const AuctionsList = () => {
         <tbody>
           {auctions.map((a) => (
             <AuctionItem
+              key={a.publicKey}
               pk={a.publicKey}
               auction={new GenAuction(a.account)}
               localAuctionKeys={localAuctionKeys}
@@ -266,97 +258,82 @@ const AuctionsList = () => {
         >
           <div className="">
             <h2 className="text-xl">Create Auction</h2>
-            <form onSubmit={handleSubmit(createAuction)}>
+            <form
+              onSubmit={handleSubmit(createAuction)}
+              className="space-y-2 my-2"
+            >
               <div>
-                <label className="space-x-2">
-                  <span>Base Mint:</span>
-                  <input className="border" {...register("baseMint")} />
-                </label>
+                <Label>Base Mint:</Label>
+                <Input {...register("baseMint")} />
               </div>
 
               <div>
-                <label className="space-x-2">
-                  <span>Quote Mint:</span>
-                  <input className="border" {...register("quoteMint")} />
-                </label>
+                <Label>Quote Mint:</Label>
+                <Input {...register("quoteMint")} />
               </div>
 
               <div>
-                <label className="space-x-2">
-                  <span>Encrypt Asks</span>
-                  <input type="checkbox" {...register("areAsksEncrypted")} />
-                </label>
+                <Label>Encrypt Asks</Label>
+                <input
+                  type="checkbox"
+                  {...register("areAsksEncrypted")}
+                ></input>
               </div>
 
               <div>
-                <label className="space-x-2">
-                  <span>Encrypt Bids</span>
-                  <input type="checkbox" {...register("areBidsEncrypted")} />
-                </label>
+                <Label>Encrypt Bids</Label>
+                <input
+                  type="checkbox"
+                  {...register("areBidsEncrypted")}
+                ></input>
               </div>
 
               <div>
-                <label className="space-x-2">
-                  <span>Min Base Order Size:</span>
-                  <input className="border" {...register("minBaseOrderSize")} />
-                </label>
+                <Label>Min Base Order Size:</Label>
+                <Input {...register("minBaseOrderSize")} />
               </div>
 
               <div>
-                <label className="space-x-2">
-                  <span>Tick Size:</span>
-                  <input className="border" {...register("tickSize")} />
-                </label>
+                <Label>Tick Size:</Label>
+                <Input {...register("tickSize")} />
               </div>
 
               <div>
-                <label className="space-x-2">
-                  <span>Order Phase Duration (s):</span>
-                  <input className="border" {...register("orderPhaseLength")} />
-                </label>
+                <Label>Order Phase Duration (s):</Label>
+                <Input {...register("orderPhaseLength")} />
               </div>
 
               <div>
-                <label className="space-x-2">
-                  <span>Decryption Phase Duration (s):</span>
-                  <input
-                    className="border"
-                    {...register("decryptionPhaseLength")}
-                  />
-                </label>
+                <Label>Decryption Phase Duration (s):</Label>
+                <Input {...register("decryptionPhaseLength")} />
               </div>
 
               <div>
-                <label className="space-x-2">
-                  <span>Event Queue Bytes:</span>
-                  <input className="border" {...register("eventQueueBytes")} />
-                </label>
+                <Label>Event Queue Bytes:</Label>
+                <Input {...register("eventQueueBytes")} />
               </div>
               <div>
-                <label className="space-x-2">
-                  <span>Bids Bytes:</span>
-                  <input className="border" {...register("bidsBytes")} />
-                </label>
+                <Label>Bids Bytes:</Label>
+                <Input {...register("bidsBytes")} />
               </div>
               <div>
-                <label className="space-x-2">
-                  <span>Asks Bytes:</span>
-                  <input className="border" {...register("asksBytes")} />
-                </label>
+                <Label>Asks Bytes:</Label>
+                <Input {...register("asksBytes")} />
               </div>
               <div>
-                <label className="space-x-2">
-                  <span>Max Orders (per User):</span>
-                  <input className="border" {...register("maxOrders")} />
-                </label>
+                <Label>Max Orders (per User):</Label>
+                <Input {...register("maxOrders")} />
               </div>
-
-              <input className="border p-1" type="submit" />
+              <div className="flex pt-2">
+                <Button className="ml-auto" type="submit">
+                  Create
+                </Button>
+              </div>
             </form>
           </div>
         </Modal>
       )}
-    </>
+    </div>
   );
 };
 

@@ -4,7 +4,9 @@ import { useEffect, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import { Auction, OpenOrders } from "../../../generated/accounts";
 import Modal from "../../components/Modal";
-import useLocalStorageState from "../../hooks/useLocalStorageState";
+import useLocalStorageState, {
+  handleParseKeyPairObj,
+} from "../../hooks/useLocalStorageState";
 import useWallet from "../../hooks/useWallet";
 import * as nacl from "tweetnacl";
 import Slider from "rc-slider";
@@ -36,6 +38,8 @@ import {
   TOKEN_PROGRAM_ID,
 } from "@solana/spl-token";
 import { token } from "@project-serum/anchor/dist/cjs/utils";
+import Input, { Label } from "../../components/Input";
+import Button from "../../components/Button";
 
 const AuctionView = () => {
   const router = useRouter();
@@ -52,7 +56,8 @@ const AuctionView = () => {
 
   const [localOrderKey] = useLocalStorageState(
     "localOrderKey",
-    nacl.box.keyPair()
+    nacl.box.keyPair(),
+    handleParseKeyPairObj
   );
 
   // local storage messes up the key encoding
@@ -339,8 +344,8 @@ const AuctionView = () => {
       <div className="grid grid-cols-1 gap-4">
         <div className="border p-4">
           <h1>Actions</h1>
-          <div className="border p-1 inline-block">
-            <button onClick={() => setOpenBidModal(true)}>Create Bid</button>
+          <div className=" p-1 inline-block">
+            <Button onClick={() => setOpenBidModal(true)}>Create Bid</Button>
           </div>
         </div>
         <div className="border p-4">
@@ -354,15 +359,15 @@ const AuctionView = () => {
         <div className="border p-4">
           <h1>Orderbook</h1>
           <p>Bids: </p>
-          {selected?.bids.getL2DepthJS(10, false).map((p) => (
-            <p>
+          {selected?.bids.getL2DepthJS(10, false).map((p, idx) => (
+            <p key={idx}>
               {p.size / 10 ** baseDecimals!} @ {p.price / 2 ** 32}
             </p>
           ))}
 
           <p>Asks:</p>
-          {selected?.asks.getL2DepthJS(10, true).map((p) => (
-            <p>
+          {selected?.asks.getL2DepthJS(10, true).map((p, idx) => (
+            <p key={idx}>
               {p.size / 10 ** baseDecimals!} @ {p.price / 2 ** 32}
             </p>
           ))}
@@ -426,8 +431,8 @@ const AuctionView = () => {
                         </div>
 
                         <div className="p-4">
-                          <div className="border p-1 inline-block">
-                            <button onClick={() => cancelBid(i)}>cancel</button>{" "}
+                          <div className=" p-1 inline-block">
+                            <Button onClick={() => cancelBid(i)}>cancel</Button>{" "}
                           </div>
                         </div>
                       </div>
@@ -450,36 +455,28 @@ const AuctionView = () => {
           isOpen={openBidModal}
         >
           <div className="">
-            <h1>Create Bid</h1>
-            <form onSubmit={handleSubmit(createBid)}>
+            <h2 className="mb-5">Place your bid</h2>
+            <form onSubmit={handleSubmit(createBid)} className="space-y-2">
               <p>
                 Quote Balance: {Number(quoteAmount!) / 10 ** quoteDecimals!}
               </p>
 
               <div>
-                <label className="space-x-2">
-                  <span>Amount:</span>
-                  <input
-                    type="number"
-                    className="border"
-                    step="any"
-                    {...register("amount", { valueAsNumber: true })}
-                  />
-                </label>
+                <Label>Bid Price:</Label>
+                <Input
+                  type="number"
+                  step="any"
+                  {...register("price", { valueAsNumber: true })}
+                />
               </div>
-
               <div>
-                <label className="space-x-2">
-                  <span>Price:</span>
-                  <input
-                    type="number"
-                    className="border"
-                    step="any"
-                    {...register("price", { valueAsNumber: true })}
-                  />
-                </label>
+                <Label>Bid Amount:</Label>
+                <Input
+                  type="number"
+                  step="any"
+                  {...register("amount", { valueAsNumber: true })}
+                />
               </div>
-
               {selected?.auction.areBidsEncrypted && (
                 <div>
                   <label className="space-x-2">
@@ -496,7 +493,11 @@ const AuctionView = () => {
                   </label>
                 </div>
               )}
-              <input className="border p-1" type="submit" />
+              <div className="flex pt-2">
+                <Button className="ml-auto" type="submit">
+                  Place bid
+                </Button>
+              </div>
             </form>
           </div>
         </Modal>

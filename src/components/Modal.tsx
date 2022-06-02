@@ -1,6 +1,7 @@
 import React from "react";
 import { Portal } from "react-portal";
 import { XIcon } from "@heroicons/react/outline";
+import Button from "./Button";
 
 const Modal: any = React.forwardRef<any, any>((props, ref) => {
   const {
@@ -41,7 +42,7 @@ const Modal: any = React.forwardRef<any, any>((props, ref) => {
 
           {isOpen ? (
             <div
-              className={`inline-block min-h-screen bg-white text-left
+              className={`inline-block min-h-screen bg-th-bkg-2 text-left
               sm:min-h-full sm:rounded-lg ${
                 noPadding ? "" : "px-8 pt-6 pb-6"
               } w-full transform align-middle shadow-lg transition-all sm:max-w-md ${className}`}
