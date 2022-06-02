@@ -90,9 +90,9 @@ export class AuctionArgs implements AuctionArgs {
     // Args
     this.auctionId = auctionId;
     this.startOrderPhase = nowBn;
-    this.endOrderPhase = nowBn.add(BN(orderPhaseLength));
+    this.endOrderPhase = nowBn.add(new BN(orderPhaseLength));
     this.endDecryptionPhase = nowBn.add(
-      BN(orderPhaseLength + decryptionPhaseLength)
+      new BN(orderPhaseLength + decryptionPhaseLength)
     );
     this.areAsksEncrypted = areAsksEncrypted;
     this.areBidsEncrypted = areBidsEncrypted;
