@@ -343,22 +343,16 @@ export const createBidInstructions = async ({
   localOrderKey,
 }: CreateAskInstructionsArgs): Promise<TransactionInstruction[]> => {
   const transactionInstructions: TransactionInstruction[] = [];
-  let [openOrdersPk] = await PublicKey.findProgramAddress(
-    [
-      wallet.toBuffer(),
-      Buffer.from("open_orders"),
-      Buffer.from(auction.auctionId),
-      auction.authority.toBuffer(),
-    ],
+  const openOrdersPk = await getOpenOrdersPk(
+    wallet,
+    auction.auctionId,
+    auction.authority,
     programId
   );
-  let [orderHistoryPk] = await PublicKey.findProgramAddress(
-    [
-      wallet!.toBuffer(),
-      Buffer.from("order_history"),
-      Buffer.from(auction.auctionId),
-      auction.authority.toBuffer(),
-    ],
+  const orderHistoryPk = await getOrderHistoryPk(
+    wallet,
+    auction.auctionId,
+    auction.authority,
     programId
   );
 
