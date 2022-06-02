@@ -1,19 +1,10 @@
 import { BN, getProvider } from "@project-serum/anchor";
-import {
-  Keypair,
-  PublicKey,
-  SystemProgram,
-  SYSVAR_RENT_PUBKEY,
-  Transaction,
-} from "@solana/web3.js";
+import { PublicKey, Transaction } from "@solana/web3.js";
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import useAuctionStore, { fetchAuctions } from "../stores/AuctionStore";
 import * as nacl from "tweetnacl";
-import { Auction, getCreateAccountParams, toFp32 } from "../../sdk";
-import { initAuction } from "../../generated/instructions";
 import { Auction as GenAuction } from "../../generated/accounts";
-import { TOKEN_PROGRAM_ID } from "@solana/spl-token";
 import Modal from "../components/Modal";
 import useLocalStorageState, {
   handleParseKeyPairArray,
@@ -21,7 +12,6 @@ import useLocalStorageState, {
 import * as dayjs from "dayjs";
 import Button from "../components/Button";
 import Input, { Label } from "../components/Input";
-import { getAuctionAddresses } from "../../sdkv2/utils/findProgramTools";
 import { createAuctionInstructions } from "../../sdkv2/auction";
 
 interface AuctionForm {
