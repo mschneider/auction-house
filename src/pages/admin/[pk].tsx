@@ -141,7 +141,6 @@ const AdminView = () => {
       const auction = selected.auction;
       const { quoteMint, baseMint } = auction;
 
-      // TODO: move to auction store
       let [openOrdersPk] = await PublicKey.findProgramAddress(
         [
           wallet.publicKey!.toBuffer(),

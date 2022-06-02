@@ -222,7 +222,7 @@ export const createAuctionInstructions = async ({
   };
 };
 
-export interface createAskInstructionsArgs {
+export interface CreateAskInstructionsArgs {
   wallet: PublicKey;
   programId: PublicKey;
   connection: Connection;
@@ -252,7 +252,7 @@ export const createAskInstructions = async ({
   baseDecimals,
   quoteDecimals,
   localOrderKey,
-}: createAskInstructionsArgs) => {
+}: CreateAskInstructionsArgs): Promise<TransactionInstruction[]> => {
   const transactionInstructions: TransactionInstruction[] = [];
   const [openOrdersPk] = await PublicKey.findProgramAddress(
     [
@@ -305,12 +305,6 @@ export const createAskInstructions = async ({
     );
     const nonce = nacl.randomBytes(nacl.box.nonceLength);
 
-    console.log({
-      plainText,
-      nonce,
-      pk: auction.naclPubkey,
-      sk: localOrderKey.secretKey,
-    });
     let cipherText = nacl.box(
       Uint8Array.from(plainText),
       nonce,
@@ -318,18 +312,15 @@ export const createAskInstructions = async ({
       localOrderKey.secretKey
     );
 
-    // local storage messes up my keys
-    const naclPubkey = Buffer.alloc(nacl.box.publicKeyLength);
-    for (let i = 0; i < nacl.box.publicKeyLength; ++i) {
-      naclPubkey[i] = localOrderKey.publicKey[i];
-    }
-
-    console.log("createAsk", "encrypted", naclPubkey, cipherText);
     transactionInstructions.push(
       newEncryptedOrder(
         {
           tokenQty,
-          naclPubkey: naclPubkey,
+          naclPubkey: Buffer.from(
+            localOrderKey.publicKey.buffer,
+            localOrderKey.publicKey.byteOffset,
+            localOrderKey.publicKey.length
+          ),
           nonce: Buffer.from(nonce.buffer, nonce.byteOffset, nonce.length),
           cipherText: Buffer.from(
             cipherText.buffer,
@@ -372,4 +363,146 @@ export const createAskInstructions = async ({
       )
     );
   }
+  return transactionInstructions;
+};
+
+export const createBidInstructions = async ({
+  connection,
+  amount,
+  price,
+  deposit,
+  wallet,
+  programId,
+  auction,
+  auctionPk,
+  quoteToken,
+  baseToken,
+  baseDecimals,
+  quoteDecimals,
+  localOrderKey,
+}: CreateAskInstructionsArgs): Promise<TransactionInstruction[]> => {
+  const transactionInstructions: TransactionInstruction[] = [];
+  let [openOrdersPk] = await PublicKey.findProgramAddress(
+    [
+      wallet.toBuffer(),
+      Buffer.from("open_orders"),
+      Buffer.from(auction.auctionId),
+      auction.authority.toBuffer(),
+    ],
+    programId
+  );
+  let [orderHistoryPk] = await PublicKey.findProgramAddress(
+    [
+      wallet!.toBuffer(),
+      Buffer.from("order_history"),
+      Buffer.from(auction.auctionId),
+      auction.authority.toBuffer(),
+    ],
+    programId
+  );
+
+  const openOrders = await OpenOrders.fetch(connection, openOrdersPk);
+  if (!openOrders) {
+    transactionInstructions.push(
+      initOpenOrders(
+        { side: new Side.Bid(), maxOrders: 2 },
+        {
+          user: wallet,
+          auction: new PublicKey(auctionPk),
+          openOrders: openOrdersPk,
+          orderHistory: orderHistoryPk,
+          quoteMint: auction.quoteMint,
+          baseMint: auction.baseMint,
+          userQuote: quoteToken,
+          userBase: baseToken,
+          systemProgram: SystemProgram.programId,
+        }
+      )
+    );
+  }
+  if (auction.areBidsEncrypted) {
+    // convert into native values
+    let fp32Price = toFp32(price).shln(32).div(auction.tickSize);
+    let quantity = new BN(amount * Math.pow(10, baseDecimals));
+    let tokenQty = new BN(deposit * Math.pow(10, quoteDecimals));
+
+    // encrypt native values
+    let plainText = Buffer.concat(
+      [fp32Price, quantity].map((bn) => {
+        return bn.toArrayLike(Buffer, "le", 8);
+      })
+    );
+    const nonce = nacl.randomBytes(nacl.box.nonceLength);
+
+    console.log({
+      plainText,
+      nonce,
+      pk: auction.naclPubkey,
+      sk: localOrderKey.secretKey,
+    });
+    let cipherText = nacl.box(
+      Uint8Array.from(plainText),
+      nonce,
+      Uint8Array.from(auction.naclPubkey),
+      localOrderKey.secretKey
+    );
+
+    // local storage messes up my keys
+    const naclPubkey = Buffer.alloc(nacl.box.publicKeyLength);
+    for (let i = 0; i < nacl.box.publicKeyLength; ++i) {
+      naclPubkey[i] = localOrderKey.publicKey[i];
+    }
+
+    transactionInstructions.push(
+      newEncryptedOrder(
+        {
+          tokenQty,
+          naclPubkey: Buffer.from(
+            localOrderKey.publicKey.buffer,
+            localOrderKey.publicKey.byteOffset,
+            localOrderKey.publicKey.length
+          ),
+          nonce: Buffer.from(nonce.buffer, nonce.byteOffset, nonce.length),
+          cipherText: Buffer.from(
+            cipherText.buffer,
+            cipherText.byteOffset,
+            cipherText.length
+          ),
+        },
+        {
+          ...auction,
+
+          user: wallet,
+          auction: new PublicKey(auctionPk),
+          openOrders: openOrdersPk,
+          userQuote: quoteToken,
+          userBase: baseToken,
+          tokenProgram: TOKEN_PROGRAM_ID,
+        }
+      )
+    );
+  } else {
+    transactionInstructions.push(
+      newOrder(
+        {
+          limitPrice: new BN(price * 2 ** 32)
+            .shln(32)
+            .div(auction.tickSize)
+            .mul(auction.tickSize)
+            .shrn(32),
+          maxBaseQty: new BN(amount * Math.pow(10, baseDecimals)),
+        },
+        {
+          ...auction,
+          user: wallet,
+          auction: new PublicKey(auctionPk),
+          openOrders: openOrdersPk,
+          userQuote: quoteToken,
+          userBase: baseToken,
+          tokenProgram: TOKEN_PROGRAM_ID,
+        }
+      )
+    );
+  }
+  return transactionInstructions;
 };
