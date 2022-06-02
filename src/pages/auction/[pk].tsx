@@ -45,14 +45,7 @@ const AuctionView = () => {
     handleParseKeyPairObj
   );
 
-  // local storage messes up the key encoding
-  const secretKey = useMemo(() => {
-    const buf = Buffer.alloc(nacl.box.secretKeyLength);
-    for (let i = 0; i < nacl.box.secretKeyLength; ++i) {
-      buf[i] = localOrderKey.secretKey[i];
-    }
-    return buf;
-  }, [localOrderKey]);
+  const secretKey = localOrderKey.secretKey;
 
   // derive shared secret
   const decryptionKey = useMemo(() => {
@@ -133,7 +126,6 @@ const AuctionView = () => {
         return;
 
       const auction = selected.auction;
-      const { quoteMint, baseMint } = auction;
 
       const tx = new Transaction();
       const bidInstructions = await createBidInstructions({
