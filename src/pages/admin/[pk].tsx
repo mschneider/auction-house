@@ -38,17 +38,14 @@ const AdminView = () => {
     nacl.box.keyPair(),
     handleParseKeyPairObj
   );
-
+  console.log(localOrderKey);
   const secretKey = localOrderKey.secretKey;
 
   // derive shared secret
   const decryptionKey = useMemo(() => {
     console.log("memo", "decryptionKey", selected?.auction);
     if (selected?.auction) {
-      return nacl.box.before(
-        Uint8Array.from(selected.auction.naclPubkey),
-        secretKey
-      );
+      return nacl.box.before(selected.auction.naclPubkey, secretKey);
     }
   }, [selected, secretKey]);
 

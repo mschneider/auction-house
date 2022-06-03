@@ -67,6 +67,7 @@ export const createAuctionInstructions = async ({
     maxOrders,
     auctionId,
   }).init();
+
   const eventQueueParams = await handleCreateAuctionParams({
     programId,
     wallet,

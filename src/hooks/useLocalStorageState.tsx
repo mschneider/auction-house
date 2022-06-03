@@ -98,7 +98,7 @@ export const parseKeyPairObj = (obj: nacl.BoxKeyPair) => {
   const newObj = {};
   const keys = Object.keys(obj);
   for (const key of keys) {
-    newObj[key] = Object.values(obj[key]);
+    newObj[key] = Uint8Array.from(Object.values(obj[key]));
   }
   return newObj;
 };

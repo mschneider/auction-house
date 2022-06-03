@@ -29,6 +29,7 @@ export interface AuctionArgs {
   startOrderPhase: BN;
   endOrderPhase: BN;
   endDecryptionPhase: BN;
+  eventQueueBytes: BN;
   areAsksEncrypted: boolean;
   areBidsEncrypted: boolean;
   minBaseOrderSize: BN;
@@ -54,6 +55,7 @@ export interface CreateAskInstructionsArgs {
 }
 export class AuctionArgs implements AuctionArgs {
   programId: PublicKey;
+  eventQueueBytes: number;
   constructor({
     programId,
     wallet,
@@ -66,6 +68,7 @@ export class AuctionArgs implements AuctionArgs {
     tickSize,
     orderPhaseLength,
     decryptionPhaseLength,
+    eventQueueBytes,
   }: CreateAuctionArgs) {
     const nowBn = new BN(Date.now() / 1000);
     const eventQueueKeypair = new anchor.web3.Keypair();
@@ -94,6 +97,7 @@ export class AuctionArgs implements AuctionArgs {
     this.endDecryptionPhase = nowBn.add(
       new BN(orderPhaseLength + decryptionPhaseLength)
     );
+    this.eventQueueBytes = new BN(eventQueueBytes);
     this.areAsksEncrypted = areAsksEncrypted;
     this.areBidsEncrypted = areBidsEncrypted;
     this.naclKeypair = localAuctionKey;

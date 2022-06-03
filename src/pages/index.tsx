@@ -131,6 +131,7 @@ const AuctionsList = () => {
     });
     tx.add(...auctionObj.transactionInstructions);
     setLocalAuctionKeys(localAuctionKeys.concat([auctionObj.localAuctionKey]));
+    console.log(tx);
     await provider.send(tx, [...auctionObj.signers], { skipPreflight: true });
     let thisAuction = await program.account.auction.fetch(
       auctionObj.auction.auction
