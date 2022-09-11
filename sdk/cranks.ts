@@ -121,7 +121,7 @@ export async function decryptOrdersCrank(
       console.log(numDecryptedUsers, "orders in total");
       break;
     }
-    let sharedKey = Array.from(
+    let sharedKey = Buffer.from(
       nacl.box.before(
         Uint8Array.from(user.naclPubkey),
         auctionObj.naclKeypair.secretKey

@@ -42,29 +42,29 @@ const ConnectWalletButton = (props: any) => {
   return (
     <div className="flex">
       <button
-        className={`bg-transparent border border-fgd-3 border-r-0 default-transition flex h-12 items-center pl-3 pr-4 rounded-l-full rounded-r-none w-36 hover:bg-bkg-3 focus:outline-none`}
+        className={`bg-transparent border border-th-fgd-3 border-r-0 default-transition flex h-12 items-center pl-3 pr-4 rounded-l-full rounded-r-none w-36 hover:bg-bkg-3 focus:outline-none`}
         onClick={handleConnectDisconnect}
         {...props}
       >
-        <div className="flex font-bold items-center text-fgd-1 text-left text-sm">
+        <div className="flex font-bold items-center text-th-fgd-1 text-left text-sm">
           <div className="pr-2">
             <img src={provider?.icon} className="h-5 w-5" />
           </div>
-          <div>
+          <div className="m-0 ">
             {connected ? "Disconnect" : "Connect"}
-            <StyledWalletProviderLabel className="font-normal text-fgd-3">
+            <StyledWalletProviderLabel className="font-normal text-th-fgd-3 m-0">
               {provider?.name}
             </StyledWalletProviderLabel>
           </div>
         </div>
       </button>
 
-      <div className="relative ">
+      <div className="relative text-th-fgd-3">
         <Menu>
           {({ open }) => (
             <>
               <Menu.Button
-                className={`border border-fgd-3 cursor-pointer default-transition h-12 w-12 py-2 px-2 rounded-r-full hover:bg-bkg-3 focus:outline-none`}
+                className={`border border-th-fgd-3 cursor-pointer default-transition h-12 w-12 py-2 px-2 rounded-r-full hover:bg-bkg-3 focus:outline-none`}
               >
                 <ChevronDownIcon
                   className={`${
@@ -72,11 +72,11 @@ const ConnectWalletButton = (props: any) => {
                   } default-transition h-5 m-auto ml-1 text-primary-light w-5`}
                 />
               </Menu.Button>
-              <Menu.Items className="absolute bg-bkg-1 border border-fgd-4 p-2 right-0 top-14 shadow-md outline-none rounded-md w-48 z-20">
+              <Menu.Items className="absolute bg-bkg-1 border border-fgd-4 p-2 right-0 top-14 shadow-md outline-none rounded-md w-48 z-20 text-th-fgd-3">
                 {WALLET_PROVIDERS.map(({ name, url, icon }) => (
                   <Menu.Item key={name}>
                     <button
-                      className="flex default-transition h-9 items-center p-2 w-full hover:bg-bkg-3 hover:cursor-pointer hover:rounded font-normal focus:outline-none"
+                      className="flex default-transition h-9 items-center p-2 w-full hover:bg-bkg-3 hover:cursor-pointer hover:rounded font-normal focus:outline-none m-0"
                       onClick={() =>
                         setWalletStore((s: WalletStore) => {
                           s.providerUrl = url;
@@ -84,7 +84,7 @@ const ConnectWalletButton = (props: any) => {
                       }
                     >
                       <img src={icon} className="h-4 w-4 mr-2" />
-                      <span className="text-sm">{name}</span>
+                      <span className="text-sm text-th-fgd-3">{name}</span>
 
                       {provider?.url === url ? (
                         <CheckCircleIcon className="h-5 ml-2 text-green w-5" />
