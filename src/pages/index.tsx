@@ -2,7 +2,6 @@ import { BN, getProvider } from "@project-serum/anchor";
 import {
   Keypair,
   PublicKey,
-  Signer,
   SystemProgram,
   SYSVAR_RENT_PUBKEY,
   Transaction,
@@ -16,8 +15,11 @@ import { initAuction } from "../../generated/instructions";
 import { Auction as GenAuction } from "../../generated/accounts";
 import { TOKEN_PROGRAM_ID } from "@solana/spl-token";
 import Modal from "../components/Modal";
-import useLocalStorageState from "../hooks/useLocalStorageState";
-
+import useLocalStorageState, {
+  handleParseKeyPairArray,
+} from "../hooks/useLocalStorageState";
+import { getAuctionAddresses } from "../utils/findProgramTools";
+import * as dayjs from "dayjs";
 const AuctionItem = ({
   pk,
   auction,
@@ -36,15 +38,22 @@ const AuctionItem = ({
       <tr key={pk.toString()}>
         <td>{auction.auctionId}</td>
         <td>
-          {new Date(auction.startOrderPhase.toNumber() * 1000).toLocaleString()}
+          {dayjs
+            .unix(auction.startOrderPhase.toNumber())
+            .toDate()
+            .toLocaleString()}
         </td>
         <td>
-          {new Date(auction.endOrderPhase.toNumber() * 1000).toLocaleString()}
+          {dayjs
+            .unix(auction.endOrderPhase.toNumber())
+            .toDate()
+            .toLocaleString()}
         </td>
         <td>
-          {new Date(
-            auction.endDecryptionPhase.toNumber() * 1000
-          ).toLocaleString()}
+          {dayjs
+            .unix(auction.endDecryptionPhase.toNumber())
+            .toDate()
+            .toLocaleString()}
         </td>
         <td>{auction.clearingPrice.toNumber()}</td>
         <td>{auction.totalQuantityMatched.toNumber()}</td>
@@ -69,7 +78,8 @@ const AuctionsList = () => {
 
   const [localAuctionKeys, setLocalAuctionKeys] = useLocalStorageState(
     "localAuctionKeys",
-    [] as nacl.BoxKeyPair[]
+    [] as nacl.BoxKeyPair[],
+    handleParseKeyPairArray
   );
 
   const [openCreateAuctionModal, setOpenCreateAuctionModal] = useState(false);
@@ -99,44 +109,21 @@ const AuctionsList = () => {
   useEffect(() => {
     fetchAuctions();
   }, []);
-
   const createAuction = async (data: any) => {
+    console.log(data);
     const provider = getProvider();
     console.log("auction", data, provider);
 
     let tx = new Transaction();
-    let signers: Signer[] = [];
 
     const auctionId = Buffer.alloc(10);
     auctionId.writeUIntLE(Date.now(), 0, 6);
 
     let nowBn = new BN(Date.now() / 1000);
     // let auctionIdArray = Array.from(auctionId);
-    let [auctionPk] = await PublicKey.findProgramAddress(
-      // TODO toBuffer might not be LE (lower endian) by default
-      [
-        Buffer.from("auction"),
-        Buffer.from(auctionId),
-        provider.wallet.publicKey.toBuffer(),
-      ],
-      program.programId
-    );
-    let [quoteVault] = await PublicKey.findProgramAddress(
-      // TODO toBuffer might not be LE (lower endian) by default
-      [
-        Buffer.from("quote_vault"),
-        Buffer.from(auctionId),
-        provider.wallet.publicKey.toBuffer(),
-      ],
-      program.programId
-    );
-    let [baseVault] = await PublicKey.findProgramAddress(
-      // TODO toBuffer might not be LE (lower endian) by default
-      [
-        Buffer.from("base_vault"),
-        Buffer.from(auctionId),
-        provider.wallet.publicKey.toBuffer(),
-      ],
+    const { auctionPk, quoteVault, baseVault } = await getAuctionAddresses(
+      auctionId,
+      provider.wallet.publicKey,
       program.programId
     );
     let eventQueueKeypair = new Keypair();
@@ -250,6 +237,7 @@ const AuctionsList = () => {
         <tbody>
           {auctions.map((a) => (
             <AuctionItem
+              key={a.publicKey}
               pk={a.publicKey}
               auction={new GenAuction(a.account)}
               localAuctionKeys={localAuctionKeys}
